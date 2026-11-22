@@ -10,6 +10,8 @@ categories:
   - {id: travel, name: Reisen}
   - {id: marketing, name: Werbung}
   - {id: office, name: Büro & Arbeitsplatz}
+  - {id: events, name: Events & Veranstaltungen}
+  - {id: bureaucratic, name: Behörden & Kammern}
   - {id: bank_fees, name: Bankgebühren}
   - {id: other, name: Sonstiges}
   - {id: uncategorized, name: Nicht zugeordnet}
