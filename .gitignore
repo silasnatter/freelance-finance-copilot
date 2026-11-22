@@ -11,6 +11,10 @@ inbox/*
 *.lance/
 lancedb/
 
+# Downloaded reference data and dlt state
+data/reference/
+.dlt/
+
 # Generated demo data (make demo)
 data/demo/*
 !data/demo/.gitkeep

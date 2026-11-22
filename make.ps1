@@ -28,7 +28,7 @@ switch ($Target) {
         Invoke-Step "uv" @("sync")
         Invoke-Step "uv" @("run", "pre-commit", "install")
     }
-    "demo" { Write-Host "make demo is implemented in M1 (FR-01)." }
+    "demo" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "demo") }
     "run" { Write-Host "make run is implemented in M3 (FR-10)." }
     "lint" { Invoke-Lint }
     "typecheck" { Invoke-Typecheck }

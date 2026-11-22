@@ -4,6 +4,7 @@ paths:
   demo_data: data/demo
   private_data: data/private
   inbox: inbox
+  fx_rates: data/reference/eurofxref-hist.csv
 
 llm:
   provider: ollama

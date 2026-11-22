@@ -1,0 +1,39 @@
+bank: wise
+id: ID
+status:
+  column: Status
+  accepted: [COMPLETED]
+booked_at:
+  column: Finished on
+  format: "%Y-%m-%d %H:%M:%S"
+direction: Direction
+reference: Reference
+
+# The amount columns are "after fees". For income, the fee is added back so that
+# revenue is reported gross and the fee appears as a separate expense.
+flows:
+  IN:
+    flow: income
+    sign: 1
+    amount: Target amount (after fees)
+    currency: Target currency
+    counterparty: Source name
+    add_fees_to_amount: true
+  OUT:
+    flow: expense
+    sign: -1
+    amount: Target amount (after fees)
+    currency: Target currency
+    counterparty: Target name
+  NEUTRAL:
+    flow: conversion
+    sign: 1
+    amount: Target amount (after fees)
+    currency: Target currency
+    counterparty: Target name
+
+fees:
+  - amount: Source fee amount
+    currency: Source fee currency
+  - amount: Target fee amount
+    currency: Target fee currency

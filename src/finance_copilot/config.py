@@ -19,6 +19,7 @@ class PathSettings(BaseModel):
     demo_data: Path
     private_data: Path
     inbox: Path
+    fx_rates: Path = Path("data/reference/eurofxref-hist.csv")
 
 
 class LlmSettings(BaseModel):

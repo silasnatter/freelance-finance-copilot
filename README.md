@@ -2,7 +2,7 @@
 
 Local-first analytics platform for freelance finances. Bank transactions and receipts are loaded, modeled with dbt, and made queryable through a dashboard and an LLM interface (text-to-SQL, RAG, MCP).
 
-> **Status:** M0, project setup. The data pipeline, dashboard and AI layer are not implemented yet. See [TODO.md](TODO.md).
+> **Status:** M1 in progress. Wise import and demo transactions work. The dbt marts, dashboard and AI layer are not implemented yet. See [TODO.md](TODO.md).
 
 This project is not tax advice. It does not file tax returns.
 
@@ -16,6 +16,17 @@ make check
 ```
 
 On Windows, use `./make.ps1 setup` and `./make.ps1 check`.
+
+## Import a Wise export
+
+Save the CSV in `data/private/`, then run:
+
+```bash
+uv run python -m finance_copilot fetch-fx
+uv run python -m finance_copilot ingest --bank wise --file data/private/wise-transactions-2026.csv
+```
+
+Repeated and overlapping imports are safe. Reporting currency is EUR, using ECB reference rates.
 
 ## Privacy
 

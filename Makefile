@@ -7,7 +7,7 @@ setup:
 	uv run pre-commit install
 
 demo:
-	@echo "make demo is implemented in M1 (FR-01)."
+	uv run python -m finance_copilot demo
 
 run:
 	@echo "make run is implemented in M3 (FR-10)."

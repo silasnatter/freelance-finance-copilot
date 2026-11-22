@@ -9,8 +9,11 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] `CLAUDE.md`, `TODO.md`, Projektstruktur [RB-07]
 
 ## M1 – Demo-Daten und Ingestion
-- [ ] Deterministischer Demo-Generator für Buchungen, Rechnungen und Beleg-PDFs, `make demo` [FR-01, RB-05]
-- [ ] Bank-CSV-Ingestion mit YAML-Mapping und Dedup über Hash [FR-02]
+- [x] Deterministische Demo-Buchungen im Wise-Format, `make demo` [FR-01, RB-05]
+- [x] Wise-Import mit YAML-Mapping, Upsert über Bank-ID und EZB-Kursen [FR-02]
+- [ ] Wise-Mapping mit echtem Export prüfen, besonders Gebühren [FR-02]
+- [ ] Mapping für das zweite Konto [FR-02]
+- [ ] Demo-Rechnungen und Beleg-PDFs [FR-01]
 - [ ] Ausgangsrechnungen laden [FR-03]
 
 ## M2 – dbt-Modell
@@ -55,7 +58,8 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] Eigennutzung mit echten Daten
 
 ## Fragen
-- Welche Bank(en) zuerst? Bestimmt das erste CSV-Mapping.
+- Bei welcher Bank liegt das zweite Konto?
+- Welcher Wechselkurs ist steuerlich maßgeblich? Mit Steuerberater abstimmen, Standard sind EZB-Referenzkurse.
 - Welches Ollama-Modell für Text-to-SQL?
 - Welches mehrsprachige Embedding-Modell?
 - Welche Kategorien und Prozentsätze für die Steuerrücklage? Mit Steuerberater abstimmen.
