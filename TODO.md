@@ -22,7 +22,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Scalable bewusst nicht importieren: nur Transfers zwischen eigenen Konten, SVS und Steuern laufen über Raiffeisen [FR-02]
 - [ ] Markierung für abzuschreibende Anschaffungen über der GWG-Grenze
 - [ ] Demo-Rechnungen und Beleg-PDFs [FR-01]
-- [ ] Ausgangsrechnungen laden [FR-03]
+- [ ] (zurückgestellt) Ausgangsrechnungen laden [FR-03]
 
 ## M2 – dbt-Modell
 - [ ] Seeds für Kategorien, Regeln, Steuerkonfiguration und Kunden
@@ -33,7 +33,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Sicherheitstopf auf Scalable: Startguthaben plus 50 % der Einnahmen, minus SVS und Steuern [FR-17]
 - [ ] Startguthaben und `reserve_paid` lokal eintragen und Soll mit echtem Scalable-Guthaben vergleichen [FR-17]
 - [ ] Kategorien und regelbasierte Kategorisierung, `dim_category`, `dim_counterparty` [FR-05]
-- [ ] Rechnungs-Marts `fct_invoices`, `dim_customer`, `mart_open_invoices` [FR-03]
+- [ ] (zurückgestellt) Rechnungs-Marts `fct_invoices`, `dim_customer`, `mart_open_invoices` [FR-03]
 - [ ] `dbt-expectations` und dbt docs [NFR-02, NFR-09]
 
 ## M3 – Orchestrierung und Dashboard
@@ -47,7 +47,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] Beleg-Extraktion aus `inbox/` [FR-04]
 - [ ] LanceDB-Index und k-NN-Kategorisierung [FR-06]
 - [ ] Beleg-Buchung-Matching [FR-08]
-- [ ] Rechnung-Zahlung-Matching [FR-09]
+- [ ] (zurückgestellt) Rechnung-Zahlung-Matching [FR-09]
 
 ## M5 – LLM-Schicht
 - [ ] Provider-Schnittstelle für Ollama und Claude [RB-06]
