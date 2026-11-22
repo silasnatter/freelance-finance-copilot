@@ -11,6 +11,7 @@ from finance_copilot.dashboard.data import (
     DashboardUnavailableError,
     available_years,
     dashboard_warehouse,
+    load_expenses_by_category,
     load_monthly,
     load_summary,
     load_top_expenses,
@@ -45,6 +46,16 @@ def warehouse(tmp_path: Path) -> Path:
             ) as t(month_start, year, year_month, start_balance_eur, income_share,
                    reserve_added_eur, insurance_paid_eur, tax_paid_eur, target_balance_eur,
                    is_estimate)
+            """
+        )
+        connection.execute(
+            """
+            create table marts.mart_expenses_by_category as select * from (values
+              (2026, 'software', 'Software & Hosting', 1, 150.00, 3),
+              (2026, 'bank_fees', 'Bankgebühren', 10, 10.00, 1),
+              (2026, 'uncategorized', 'Nicht zugeordnet', 12, 80.00, 2),
+              (2025, 'software', 'Software & Hosting', 1, 11.00, 1)
+            ) as t(year, category_id, category_name, sort_order, amount_eur, bookings)
             """
         )
         connection.execute(
@@ -107,6 +118,14 @@ def test_top_expenses_without_tail_have_no_other_row(warehouse: Path) -> None:
     rows = load_top_expenses(warehouse, 2025, limit=5)
 
     assert rows == [("Altjahr", Decimal("10.00")), ("Bankgebühren", Decimal("1.00"))]
+
+
+def test_expenses_by_category_are_ranked_for_one_year(warehouse: Path) -> None:
+    assert load_expenses_by_category(warehouse, 2026) == [
+        ("Software & Hosting", Decimal("150.00")),
+        ("Nicht zugeordnet", Decimal("80.00")),
+        ("Bankgebühren", Decimal("10.00")),
+    ]
 
 
 def test_missing_warehouse_is_reported(tmp_path: Path) -> None:
@@ -172,6 +191,15 @@ def test_app_shows_kpis_and_explains_scalable_target(
     assert "50 %" in page_text
     assert "Keine Steuerberatung" in page_text
     assert "3 " in " ".join(item.value for item in app.warning)
+
+
+def test_app_warns_about_uncategorized_costs(
+    warehouse: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = run_app(warehouse, monkeypatch)
+
+    assert any("80,00 €" in item.value for item in app.warning)
+    assert any(item.value == "Kosten nach Kategorie" for item in app.subheader)
 
 
 def test_app_explains_missing_data(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

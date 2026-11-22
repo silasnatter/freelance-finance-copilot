@@ -89,7 +89,9 @@ def profit_chart(months: Sequence[MonthRow], dark: bool) -> alt.Chart:
     return chart
 
 
-def top_expenses_chart(rows: Sequence[tuple[str, Decimal]], dark: bool) -> alt.Chart:
+def top_expenses_chart(
+    rows: Sequence[tuple[str, Decimal]], dark: bool, label: str = "Kategorie"
+) -> alt.Chart:
     values: list[dict[str, str | float]] = [
         {"name": name, "betrag": float(amount)} for name, amount in rows
     ]
@@ -102,7 +104,7 @@ def top_expenses_chart(rows: Sequence[tuple[str, Decimal]], dark: bool) -> alt.C
             y=alt.Y("name:N", sort=order, axis=alt.Axis(title=None, ticks=False, labelLimit=220)),
             x=alt.X("betrag:Q", axis=_value_axis()),
             tooltip=[
-                alt.Tooltip("name:N", title="Empfänger"),
+                alt.Tooltip("name:N", title=label),
                 alt.Tooltip("betrag_text:N", title="Kosten"),
             ],
         )

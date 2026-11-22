@@ -24,7 +24,9 @@ __all__ = [
 ]
 
 DBT_DIR = PROJECT_ROOT / "dbt"
-SOURCE_KEY = dg.AssetKey(["raw", "bank_transactions"])
+SOURCE_KEYS = tuple(
+    dg.AssetKey(["raw", table]) for table in ("bank_transactions", "categories", "reserve_settings")
+)
 
 
 def matching_import_files(settings: Settings) -> list[tuple[str, Path]]:
@@ -104,17 +106,25 @@ def _build_assets(
     project = _prepare_project(target, settings)
     environment = _runtime_env(settings)
 
-    @dg.asset(key=SOURCE_KEY, group_name="ingestion", kinds={"dlt", "duckdb"})
-    def bank_transactions() -> dg.MaterializeResult[Any]:
-        """Import all bank exports into the warehouse."""
-        return dg.MaterializeResult(metadata={"files": run_imports(settings, target)})
+    @dg.multi_asset(
+        name="bank_imports",
+        specs=[
+            dg.AssetSpec(key, group_name="ingestion", kinds={"dlt", "duckdb"})
+            for key in SOURCE_KEYS
+        ],
+    )
+    def bank_imports() -> Iterator[dg.MaterializeResult[Any]]:
+        """Import bank exports, categories and pot settings into the warehouse."""
+        files = run_imports(settings, target)
+        for key in SOURCE_KEYS:
+            yield dg.MaterializeResult(asset_key=key, metadata={"files": files})
 
     @dbt_assets(manifest=project.manifest_path, name="finance_copilot_dbt")
     def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource) -> Iterator[Any]:
         with _temporary_env(environment):
             yield from dbt.cli(["build"], context=context).stream()
 
-    return [bank_transactions, dbt_models], {"dbt": DbtCliResource(project_dir=project)}
+    return [bank_imports, dbt_models], {"dbt": DbtCliResource(project_dir=project)}
 
 
 def build_definitions(target: DataTarget, settings: Settings) -> dg.Definitions:

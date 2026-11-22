@@ -26,6 +26,7 @@ class PathSettings(BaseModel):
     business_rules: Path = Path("data/private/business_rules.yaml")
     booking_decisions: Path = Path("data/private/booking_decisions.yaml")
     reserve: Path = Path("data/private/reserve.yaml")
+    category_rules: Path = Path("data/private/category_rules.yaml")
 
 
 class LlmSettings(BaseModel):

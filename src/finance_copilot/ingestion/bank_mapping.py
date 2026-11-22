@@ -9,7 +9,9 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from finance_copilot.ingestion.categories import CategoryRules, assign_category
 from finance_copilot.ingestion.fx import FxRateMissingError, FxRates
+from finance_copilot.ingestion.text import normalize_name
 
 
 class _Model(BaseModel):
@@ -64,11 +66,6 @@ def business_amount(flow: str, amount_eur: Decimal) -> Decimal:
     return amount_eur if flow in ("income", "expense", "tax") else Decimal("0.00")
 
 
-def normalize_name(value: str) -> str:
-    """Make account holder names comparable across spelling and spacing."""
-    return " ".join(value.split()).casefold()
-
-
 def load_own_names(path: Path) -> frozenset[str]:
     """Read the private list of own account holder names, if it exists."""
     if not path.is_file():
@@ -92,6 +89,7 @@ def normalize_row(
     mapping: BankMapping,
     rates: FxRates,
     own_names: frozenset[str] = frozenset(),
+    category_rules: CategoryRules | None = None,
 ) -> dict[str, object] | None:
     """Return a normalized transaction, or None if its status is not accepted."""
     if row[mapping.status.column] not in mapping.status.accepted:
@@ -136,6 +134,8 @@ def normalize_row(
     counterparty = row[rule.counterparty].strip()
     is_own_account = rule.flow != "conversion" and normalize_name(counterparty) in own_names
     flow = "transfer" if is_own_account else rule.flow
+    reference = row[mapping.reference].strip()
+    category_id, category_source = assign_category(counterparty, reference, category_rules or {})
 
     return {
         "transaction_id": f"{bank}:{row_id}",
@@ -144,12 +144,14 @@ def normalize_row(
         "booking_date": booking_date,
         "flow": flow,
         "counterparty": counterparty,
-        "reference": row[mapping.reference].strip(),
+        "reference": reference,
         "amount_original": rule.sign * amount,
         "currency_original": currency,
         "amount_eur": rule.sign * amount_eur,
         "business_amount_eur": business_amount(flow, rule.sign * amount_eur),
         "paid_from_reserve": False,
+        "category_id": category_id,
+        "category_source": category_source,
         "fx_rate": fx_rate,
         "fee_eur": fee_eur,
     }

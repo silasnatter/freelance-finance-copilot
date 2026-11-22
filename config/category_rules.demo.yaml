@@ -1,0 +1,10 @@
+# Rules for the synthetic demo vendors.
+software:
+  - Nordcloud Hosting GmbH
+  - Codewerk Software GmbH
+insurance:
+  - Sicher Versicherung AG
+telecom:
+  - Funknetz Telekom AG
+office:
+  - Coworking Mitte GmbH

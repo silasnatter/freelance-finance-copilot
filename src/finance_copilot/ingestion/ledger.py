@@ -18,9 +18,11 @@ import duckdb
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from finance_copilot.ingestion.bank_mapping import BankRowError, business_amount, normalize_name
+from finance_copilot.ingestion.bank_mapping import BankRowError, business_amount
+from finance_copilot.ingestion.categories import CategoryRules, assign_category
 from finance_copilot.ingestion.decisions import Decision, apply_decision
 from finance_copilot.ingestion.fx import FxRateMissingError, FxRates
+from finance_copilot.ingestion.text import matches_any, normalize_name
 
 
 class _Model(BaseModel):
@@ -91,14 +93,6 @@ def _first(fields: dict[str, str], labels: Sequence[str]) -> str:
     return next((fields[label] for label in labels if fields.get(label)), "")
 
 
-def _matches(terms: Sequence[str], haystack: str) -> bool:
-    for term in terms:
-        needle = normalize_name(term)
-        if needle and re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", haystack):
-            return True
-    return False
-
-
 def classify_by_rules(
     counterparty: str, text: str, own_names: frozenset[str], rules: BusinessRules
 ) -> str:
@@ -112,14 +106,16 @@ def classify_by_rules(
         ("income", rules.income),
     )
     for flow, terms in ordered:
-        if _matches(terms, haystack):
+        if matches_any(terms, haystack):
             return flow
     return "private"
 
 
 def is_paid_from_reserve(flow: str, counterparty: str, text: str, rules: BusinessRules) -> bool:
     """Mark expenses such as SVS that are paid from the safety pot."""
-    return flow == "expense" and _matches(rules.reserve_paid, normalize_name(counterparty or text))
+    return flow == "expense" and matches_any(
+        rules.reserve_paid, normalize_name(counterparty or text)
+    )
 
 
 def _amount(raw: str, mapping: LedgerMapping) -> Decimal:
@@ -141,6 +137,7 @@ def parse_ledger_row(
     rules: BusinessRules,
     row_number: int,
     occurrence: int = 0,
+    category_rules: CategoryRules | None = None,
 ) -> dict[str, object]:
     """Normalize one row. Errors name the row number, never its content."""
     bank = mapping.bank
@@ -171,6 +168,7 @@ def parse_ledger_row(
     counterparty = _first(labeled, labels)
     digest = hashlib.sha256("\x1f".join([*fields, str(occurrence)]).encode()).hexdigest()
     flow = classify_by_rules(counterparty, text, own_names, rules)
+    category_id, category_source = assign_category(counterparty, text, category_rules or {})
 
     return {
         "transaction_id": f"{bank}:{digest[:32]}",
@@ -185,6 +183,8 @@ def parse_ledger_row(
         "amount_eur": amount_eur,
         "business_amount_eur": business_amount(flow, amount_eur),
         "paid_from_reserve": is_paid_from_reserve(flow, counterparty, text, rules),
+        "category_id": category_id,
+        "category_source": category_source,
         "fx_rate": fx_rate,
         "fee_eur": Decimal("0.00"),
     }
@@ -197,6 +197,7 @@ def read_ledger_csv(
     own_names: frozenset[str],
     rules: BusinessRules,
     decisions: Mapping[str, Decision] | None = None,
+    category_rules: CategoryRules | None = None,
 ) -> list[dict[str, object]]:
     seen: Counter[tuple[str, ...]] = Counter()
     rows = []
@@ -207,7 +208,14 @@ def read_ledger_csv(
         for row_number, fields in enumerate(reader, start=1):
             key = tuple(fields)
             parsed = parse_ledger_row(
-                fields, mapping, rates, own_names, rules, row_number, occurrence=seen[key]
+                fields,
+                mapping,
+                rates,
+                own_names,
+                rules,
+                row_number,
+                occurrence=seen[key],
+                category_rules=category_rules,
             )
             rows.append(apply_decision(parsed, decisions or {}))
             seen[key] += 1

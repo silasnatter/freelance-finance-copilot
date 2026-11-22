@@ -1,0 +1,11 @@
+# Copy to data/private/category_rules.yaml. The copy is gitignored.
+# Each term matches whole words in the counterparty, or in the text if there is none.
+# Valid categories are listed in config/categories.yaml.
+software:
+  - Example Hosting
+hardware:
+  - Example Electronics Store
+insurance:
+  - SVS
+telecom:
+  - Example Mobile

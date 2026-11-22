@@ -11,6 +11,8 @@ select
     amount_eur,
     business_amount_eur,
     paid_from_reserve,
+    category_id,
+    category_source,
     fx_rate,
     fee_eur,
     business_fee_eur

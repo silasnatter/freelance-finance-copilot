@@ -46,6 +46,16 @@ models:
       - name: paid_from_reserve
         description: "True for expenses paid from the Scalable safety pot, such as SVS."
         data_tests: [not_null]
+      - name: category_id
+        description: "Cost category assigned by a rule."
+        data_tests: [not_null]
+      - name: category_source
+        description: "rule if a rule matched, otherwise none."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [rule, none]
       - name: fx_rate
         description: "Applied exchange rate."
         data_tests: [not_null]
@@ -65,3 +75,16 @@ models:
       - name: income_share
         description: "Share of business income moved to the pot."
         data_tests: [not_null]
+
+  - name: stg_bank__categories
+    description: "Cost category catalog. Grain: one category."
+    columns:
+      - name: category_id
+        description: "Category key."
+        data_tests: [unique, not_null]
+      - name: category_name
+        description: "Display name."
+        data_tests: [unique, not_null]
+      - name: sort_order
+        description: "Display order."
+        data_tests: [unique, not_null]

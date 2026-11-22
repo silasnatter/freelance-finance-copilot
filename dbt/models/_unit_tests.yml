@@ -74,3 +74,27 @@ unit_tests:
         - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 500.00, insurance_paid_eur: 100.00, tax_paid_eur: 0.00, target_balance_eur: 1400.00, is_estimate: true}
         - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 500.00, insurance_paid_eur: 100.00, tax_paid_eur: 200.00, target_balance_eur: 1200.00, is_estimate: true}
         - {month_start: 2027-01-01, year: 2027, year_month: "2027-01", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 600.00, insurance_paid_eur: 80.00, tax_paid_eur: 200.00, target_balance_eur: 1320.00, is_estimate: true}
+
+  - name: expenses_by_category_nets_refunds_and_adds_bank_fees
+    description: "Only business expenses count, partial shares apply, and fees form their own category."
+    model: mart_expenses_by_category
+    given:
+      - input: ref('dim_category')
+        rows:
+          - {category_id: software, category_name: Software, sort_order: 1}
+          - {category_id: bank_fees, category_name: Bankgebühren, sort_order: 2}
+          - {category_id: uncategorized, category_name: Nicht zugeordnet, sort_order: 3}
+      - input: ref('fct_transactions')
+        rows:
+          - {transaction_id: a, booking_date: 2026-01-05, flow: expense, category_id: software, business_amount_eur: -100.00, business_fee_eur: 1.00}
+          - {transaction_id: b, booking_date: 2026-02-05, flow: expense, category_id: software, business_amount_eur: 20.00, business_fee_eur: 0.00}
+          - {transaction_id: c, booking_date: 2026-02-06, flow: expense, category_id: uncategorized, business_amount_eur: -30.00, business_fee_eur: 0.00}
+          - {transaction_id: d, booking_date: 2026-03-06, flow: private, category_id: software, business_amount_eur: 0.00, business_fee_eur: 0.00}
+          - {transaction_id: e, booking_date: 2026-03-07, flow: income, category_id: uncategorized, business_amount_eur: 500.00, business_fee_eur: 2.00}
+          - {transaction_id: f, booking_date: 2025-12-07, flow: expense, category_id: software, business_amount_eur: -9.00, business_fee_eur: 0.00}
+    expect:
+      rows:
+        - {year: 2025, category_id: software, category_name: Software, sort_order: 1, amount_eur: 9.00, bookings: 1}
+        - {year: 2026, category_id: software, category_name: Software, sort_order: 1, amount_eur: 80.00, bookings: 2}
+        - {year: 2026, category_id: bank_fees, category_name: Bankgebühren, sort_order: 2, amount_eur: 3.00, bookings: 2}
+        - {year: 2026, category_id: uncategorized, category_name: Nicht zugeordnet, sort_order: 3, amount_eur: 30.00, bookings: 1}

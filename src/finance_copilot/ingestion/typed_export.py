@@ -16,6 +16,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict
 
 from finance_copilot.ingestion.bank_mapping import BankRowError, business_amount
+from finance_copilot.ingestion.categories import (
+    UNCATEGORIZED,
+    CategoryRules,
+    assign_category,
+)
 from finance_copilot.ingestion.decisions import Decision, apply_decision
 from finance_copilot.ingestion.fx import FxRates
 from finance_copilot.ingestion.ledger import (
@@ -109,6 +114,7 @@ def parse_typed_row(
     rates: FxRates,
     own_names: frozenset[str],
     rules: BusinessRules,
+    category_rules: CategoryRules | None = None,
 ) -> dict[str, object]:
     """Normalize one row. Errors name the booking id, never its content."""
     bank = mapping.bank
@@ -122,6 +128,11 @@ def parse_typed_row(
     counterparty = _first(row, columns.counterparty)
     reference = _first(row, columns.reference)
     flow = _flow(booking_type, counterparty, reference, mapping, own_names, rules, label)
+    category_id, category_source = (UNCATEGORIZED, "none")
+    if booking_type in mapping.rule_based_types:
+        category_id, category_source = assign_category(
+            counterparty, reference, category_rules or {}
+        )
 
     try:
         booking_date = date.fromisoformat(row[columns.date].strip())
@@ -165,6 +176,8 @@ def parse_typed_row(
         "amount_eur": amount_eur,
         "business_amount_eur": business_amount(flow, amount_eur),
         "paid_from_reserve": is_paid_from_reserve(flow, counterparty, reference, rules),
+        "category_id": category_id,
+        "category_source": category_source,
         "fx_rate": fx_rate,
         "fee_eur": fee,
     }
@@ -177,6 +190,7 @@ def read_typed_csv(
     own_names: frozenset[str],
     rules: BusinessRules,
     decisions: Mapping[str, Decision] | None = None,
+    category_rules: CategoryRules | None = None,
 ) -> list[dict[str, object]]:
     columns = mapping.columns
     required = {
@@ -198,6 +212,9 @@ def read_typed_csv(
         if not required <= set(reader.fieldnames or ()):
             raise BankRowError(f"{mapping.bank} export: expected columns are missing")
         return [
-            apply_decision(parse_typed_row(row, mapping, rates, own_names, rules), decisions or {})
+            apply_decision(
+                parse_typed_row(row, mapping, rates, own_names, rules, category_rules),
+                decisions or {},
+            )
             for row in reader
         ]

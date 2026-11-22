@@ -32,6 +32,12 @@ from finance_copilot.ingestion.bank_mapping import (
     load_bank_mapping,
     load_own_names,
 )
+from finance_copilot.ingestion.categories import (
+    load_categories,
+    load_category_rules,
+    store_categories,
+    uncategorized_expenses,
+)
 from finance_copilot.ingestion.decisions import (
     Decision,
     PendingBooking,
@@ -59,6 +65,8 @@ from finance_copilot.ingestion.typed_export import (
 
 BANKS_DIR = PROJECT_ROOT / "config" / "banks"
 DEMO_RESERVE = PROJECT_ROOT / "config" / "reserve.demo.yaml"
+DEMO_CATEGORY_RULES = PROJECT_ROOT / "config" / "category_rules.demo.yaml"
+CATEGORIES = PROJECT_ROOT / "config" / "categories.yaml"
 DECIDE_PROMPT = "[g] geschäftlich  [p] privat  [t] Teilbetrag  [s] später  [q] beenden > "
 
 
@@ -70,8 +78,13 @@ def _demo(settings: Settings) -> int:
     generate_ecb_rates(rates_path)
     mapping = load_bank_mapping(BANKS_DIR / "wise.yaml")
     warehouse = demo_dir / "warehouse.duckdb"
-    count = ingest_bank_csv(source, mapping, FxRates.from_ecb_csv(rates_path), warehouse)
+    categories = load_categories(CATEGORIES)
+    category_rules = load_category_rules(DEMO_CATEGORY_RULES, categories)
+    count = ingest_bank_csv(
+        source, mapping, FxRates.from_ecb_csv(rates_path), warehouse, category_rules
+    )
     store_reserve_settings(load_reserve_settings(DEMO_RESERVE), warehouse)
+    store_categories(categories, warehouse)
     print(f"Demo data ready: {count} transactions loaded.")
     return 0
 
@@ -90,7 +103,7 @@ class PrivateConfigError(ValueError):
 def _load_private[T](loader: Callable[[Path], T], path: Path) -> T:
     try:
         return loader(path)
-    except (yaml.YAMLError, ValidationError, AttributeError, TypeError):
+    except (yaml.YAMLError, ValidationError, ValueError, AttributeError, TypeError):
         raise PrivateConfigError(f"{path.name} is invalid, check its format.") from None
 
 
@@ -111,6 +124,10 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
     try:
         own_names = _load_private(load_own_names, settings.paths.own_accounts)
         reserve = _load_private(load_reserve_settings, settings.paths.reserve)
+        categories = load_categories(CATEGORIES)
+        category_rules = _load_private(
+            lambda path: load_category_rules(path, categories), settings.paths.category_rules
+        )
         is_ledger = is_ledger_mapping(mapping_path)
         if is_ledger or is_typed_mapping(mapping_path):
             if not settings.paths.business_rules.is_file():
@@ -119,24 +136,31 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
             decisions = _load_private(load_decisions, settings.paths.booking_decisions)
             if is_ledger:
                 ledger = load_ledger_mapping(mapping_path)
-                rows = read_ledger_csv(file, ledger, rates, own_names, rules, decisions)
+                rows = read_ledger_csv(
+                    file, ledger, rates, own_names, rules, decisions, category_rules
+                )
             else:
                 typed = load_typed_mapping(mapping_path)
-                rows = read_typed_csv(file, typed, rates, own_names, rules, decisions)
+                rows = read_typed_csv(
+                    file, typed, rates, own_names, rules, decisions, category_rules
+                )
         else:
-            rows = read_bank_csv(file, load_bank_mapping(mapping_path), rates, own_names)
+            rows = read_bank_csv(
+                file, load_bank_mapping(mapping_path), rates, own_names, category_rules
+            )
     except (BankRowError, PrivateConfigError) as error:
         print(f"Import stopped, nothing was loaded: {error}", file=sys.stderr)
         return 1
     count = load_bank_rows(rows, settings.paths.warehouse)
     store_reserve_settings(reserve, settings.paths.warehouse)
+    store_categories(categories, settings.paths.warehouse)
     flows = Counter(str(row["flow"]) for row in rows)
     summary = ", ".join(f"{flow}: {flows[flow]}" for flow in sorted(flows))
     print(f"Imported {count} transactions ({summary}).")
     return 0
 
 
-def _review(settings: Settings, limit: int) -> int:
+def _review(settings: Settings, limit: int, uncategorized: bool = False) -> int:
     """Show private counterparties, only in a real terminal so names stay out of logs and chats."""
     if not sys.stdout.isatty():
         print("Review shows personal data. Run it in a separate terminal.", file=sys.stderr)
@@ -144,7 +168,8 @@ def _review(settings: Settings, limit: int) -> int:
     if not settings.paths.warehouse.is_file():
         print("No warehouse found. Import a bank export first.", file=sys.stderr)
         return 1
-    for name, count in top_private_counterparties(settings.paths.warehouse, limit):
+    load_rows = uncategorized_expenses if uncategorized else top_private_counterparties
+    for name, count in load_rows(settings.paths.warehouse, limit):
         print(f"{count:4d}  {name}")
     return 0
 
@@ -286,6 +311,9 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     ingest.add_argument("--file", required=True, type=Path)
     review = commands.add_parser("review", help="list unassigned private counterparties")
     review.add_argument("--top", type=int, default=40)
+    review.add_argument(
+        "--uncategorized", action="store_true", help="list business costs without a category"
+    )
     commands.add_parser("decide", help="decide open bookings of mixed vendors")
     for name, description in (
         ("pipeline", "run imports and dbt once"),
@@ -302,7 +330,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     if args.command == "fetch-fx":
         return _fetch_fx(active)
     if args.command == "review":
-        return _review(active, args.top)
+        return _review(active, args.top, args.uncategorized)
     if args.command == "decide":
         return _decide(active)
     if args.command in ("pipeline", "run", "orchestrator"):

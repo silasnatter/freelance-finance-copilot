@@ -7,5 +7,7 @@ sources:
     tables:
       - name: bank_transactions
         description: "Normalized bookings of all imported accounts. Grain: one booking."
+      - name: categories
+        description: "Cost category catalog. Grain: one category."
       - name: reserve_settings
         description: "Start balance and income share of the safety pot. Grain: one row."

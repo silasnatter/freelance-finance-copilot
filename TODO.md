@@ -32,7 +32,9 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Marts mit echten Daten bauen und prüfen [NFR-02]
 - [x] Sicherheitstopf auf Scalable: Startguthaben plus 50 % der Einnahmen, minus SVS und Steuern [FR-17]
 - [ ] Startguthaben und `reserve_paid` lokal eintragen und Soll mit echtem Scalable-Guthaben vergleichen [FR-17]
-- [ ] Kategorien und regelbasierte Kategorisierung, `dim_category`, `dim_counterparty` [FR-05]
+- [x] Kategorien und regelbasierte Kategorisierung, `dim_category`, `mart_expenses_by_category` [FR-05]
+- [ ] Echte Empfänger in `category_rules.yaml` zuordnen und prüfen [FR-05]
+- [ ] `dim_counterparty` [FR-05]
 - [ ] (zurückgestellt) Rechnungs-Marts `fct_invoices`, `dim_customer`, `mart_open_invoices` [FR-03]
 - [ ] `dbt-expectations` und dbt docs [NFR-02, NFR-09]
 
@@ -41,7 +43,8 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Streamlit-Dashboard mit Umsatz, Kosten, Gewinn und Steuerrücklage, `make run` [FR-10, NFR-01]
 - [x] Pipeline-Laufzeit auf Demo-Daten unter 3 Minuten [NFR-10]
 - [ ] Dashboard mit echten Daten prüfen, `make run-private` [FR-10]
-- [ ] Dashboard um Kategorien und offene Rechnungen ergänzen, sobald FR-03 und FR-05 stehen [FR-10]
+- [x] Dashboard zeigt Kosten nach Kategorie [FR-05, FR-10]
+- [ ] (zurückgestellt) Dashboard um offene Rechnungen ergänzen [FR-03, FR-10]
 
 ## M4 – Dokumente und Vektorsuche
 - [ ] Beleg-Extraktion aus `inbox/` [FR-04]

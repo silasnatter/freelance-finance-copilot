@@ -1,3 +1,15 @@
-# Filled in M2 (FR-05).
-categories: []
-rules: []
+# Cost categories, in display order. Vendor rules are private:
+# see config/category_rules.example.yaml.
+categories:
+  - {id: software, name: Software & Hosting}
+  - {id: hardware, name: Hardware & Geräte}
+  - {id: insurance, name: Versicherung & SVS}
+  - {id: telecom, name: Telefon & Internet}
+  - {id: advisory, name: Steuerberatung & Buchhaltung}
+  - {id: education, name: Weiterbildung}
+  - {id: travel, name: Reisen}
+  - {id: marketing, name: Werbung}
+  - {id: office, name: Büro & Arbeitsplatz}
+  - {id: bank_fees, name: Bankgebühren}
+  - {id: other, name: Sonstiges}
+  - {id: uncategorized, name: Nicht zugeordnet}

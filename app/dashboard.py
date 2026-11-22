@@ -7,10 +7,12 @@ import streamlit as st
 from finance_copilot.config import load_settings
 from finance_copilot.dashboard.charts import profit_chart, revenue_cost_chart, top_expenses_chart
 from finance_copilot.dashboard.data import (
+    UNCATEGORIZED_LABEL,
     DashboardUnavailableError,
     available_years,
     dashboard_warehouse,
     format_eur,
+    load_expenses_by_category,
     load_monthly,
     load_summary,
     load_top_expenses,
@@ -32,6 +34,8 @@ year = st.selectbox("Jahr", years)
 summary = load_summary(warehouse, year)
 months = load_monthly(warehouse, year)
 expenses = load_top_expenses(warehouse, year)
+categories = load_expenses_by_category(warehouse, year)
+uncategorized = dict(categories).get(UNCATEGORIZED_LABEL)
 dark = st.context.theme.type == "dark"
 
 revenue, costs, profit, reserve = st.columns(4)
@@ -55,6 +59,9 @@ if summary.open_review_bookings:
         "und fehlen in den Kosten."
     )
 
+if uncategorized:
+    st.warning(f"{format_eur(uncategorized)} Kosten sind noch keiner Kategorie zugeordnet.")
+
 st.subheader("Umsatz und Kosten je Monat")
 st.altair_chart(revenue_cost_chart(months, dark), width="stretch")
 
@@ -63,11 +70,18 @@ with left:
     st.subheader("Gewinn je Monat")
     st.altair_chart(profit_chart(months, dark), width="stretch")
 with right:
-    st.subheader("Größte Kosten nach Empfänger")
-    if expenses:
-        st.altair_chart(top_expenses_chart(expenses, dark), width="stretch")
+    st.subheader("Kosten nach Kategorie")
+    if categories:
+        st.altair_chart(top_expenses_chart(categories, dark), width="stretch")
     else:
         st.caption("Keine Kosten in diesem Jahr.")
+
+with st.expander("Größte Kosten nach Empfänger"):
+    st.dataframe(
+        [{"Empfänger": name, "Kosten": format_eur(amount)} for name, amount in expenses],
+        hide_index=True,
+        width="stretch",
+    )
 
 with st.expander("Monatswerte als Tabelle"):
     st.dataframe(

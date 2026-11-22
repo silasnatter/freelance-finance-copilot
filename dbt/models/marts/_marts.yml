@@ -36,6 +36,46 @@ models:
         description: "True on Saturday and Sunday."
         data_tests: [not_null]
 
+  - name: dim_category
+    description: "Cost categories. Grain: one category."
+    columns:
+      - name: category_id
+        description: "Category key."
+        data_tests: [unique, not_null]
+      - name: category_name
+        description: "Display name."
+        data_tests: [unique, not_null]
+      - name: sort_order
+        description: "Display order."
+        data_tests: [unique, not_null]
+
+  - name: mart_expenses_by_category
+    description: "Business costs including bank fees, net of refunds. Grain: one year and category."
+    columns:
+      - name: year
+        description: "Calendar year."
+        data_tests: [not_null]
+      - name: category_id
+        description: "Cost category."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_category')
+                field: category_id
+      - name: category_name
+        description: "Display name."
+        data_tests: [not_null]
+      - name: sort_order
+        description: "Display order."
+        data_tests: [not_null]
+      - name: amount_eur
+        description: "Net business cost in EUR."
+        data_tests: [not_null]
+      - name: bookings
+        description: "Number of bookings."
+        data_tests: [not_null]
+
   - name: fct_transactions
     description: "All bookings with their business share. Grain: one booking."
     columns:
@@ -82,6 +122,21 @@ models:
       - name: paid_from_reserve
         description: "True for expenses paid from the Scalable safety pot, such as SVS."
         data_tests: [not_null]
+      - name: category_id
+        description: "Cost category assigned by a rule."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_category')
+                field: category_id
+      - name: category_source
+        description: "rule if a rule matched, otherwise none."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [rule, none]
       - name: fx_rate
         description: "Applied exchange rate."
         data_tests: [not_null]

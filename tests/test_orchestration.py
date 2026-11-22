@@ -63,11 +63,14 @@ def test_definitions_connect_import_to_dbt_marts(settings: Settings) -> None:
     definitions = build_definitions("demo", settings)
 
     graph = definitions.resolve_asset_graph()
+    keys = graph.get_all_asset_keys()
     source = dg.AssetKey(["raw", "bank_transactions"])
-    staging = next(key for key in graph.get_all_asset_keys() if key.path[-1].startswith("stg_bank"))
-    marts = {key.path[-1] for key in graph.get_all_asset_keys()}
+    staging = next(key for key in keys if key.path[-1] == "stg_bank__transactions")
+    marts = {key.path[-1] for key in keys}
 
     assert source in graph.get(staging).parent_keys
+    for table in ("bank_transactions", "categories", "reserve_settings"):
+        assert graph.get(dg.AssetKey(["raw", table])).is_materializable
     assert {"fct_transactions", "mart_monthly_pnl", "mart_tax_reserve"} <= marts
 
 

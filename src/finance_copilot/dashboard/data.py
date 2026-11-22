@@ -13,6 +13,7 @@ from finance_copilot.config import Settings, data_target
 WAREHOUSE_OVERRIDE = "FINANCE_COPILOT_DASHBOARD_WAREHOUSE"
 OTHER_LABEL = "Sonstige"
 FEES_LABEL = "Bankgebühren"
+UNCATEGORIZED_LABEL = "Nicht zugeordnet"
 
 
 class DashboardUnavailableError(RuntimeError):
@@ -149,6 +150,21 @@ def load_top_expenses(warehouse: Path, year: int, limit: int = 8) -> list[tuple[
         return positions
     tail = sum((amount for _, amount in positions[limit:]), Decimal("0.00"))
     return [*positions[:limit], (OTHER_LABEL, tail)]
+
+
+def load_expenses_by_category(warehouse: Path, year: int) -> list[tuple[str, Decimal]]:
+    """Costs per category, largest first. Categories with net refunds are left out."""
+    rows = _query(
+        warehouse,
+        """
+        select category_name, amount_eur
+        from marts.mart_expenses_by_category
+        where year = ? and amount_eur > 0
+        order by amount_eur desc, sort_order
+        """,
+        [year],
+    )
+    return [(str(name), Decimal(amount)) for name, amount in rows]
 
 
 def format_eur(amount: Decimal) -> str:

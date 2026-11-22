@@ -11,6 +11,8 @@ select
     cast(amount_eur as decimal(18, 2)) as amount_eur,
     cast(business_amount_eur as decimal(18, 2)) as business_amount_eur,
     coalesce(cast(paid_from_reserve as boolean), false) as paid_from_reserve,
+    coalesce(category_id, 'uncategorized') as category_id,
+    coalesce(category_source, 'none') as category_source,
     cast(fx_rate as decimal(18, 6)) as fx_rate,
     cast(fee_eur as decimal(18, 2)) as fee_eur
 from {{ source('raw', 'bank_transactions') }}

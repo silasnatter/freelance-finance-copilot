@@ -76,6 +76,10 @@ This creates `marts.mart_monthly_pnl` and `marts.mart_tax_reserve`.
 
 The dashboard shows how much should be on your savings account if you move a fixed share of all income there and pay insurance and tax from it. Copy `config/reserve.example.yaml` to `data/private/reserve.yaml`, enter your start balance, and list insurance payees under `reserve_paid` in `business_rules.yaml`. Interest is not included, and this is not tax advice.
 
+## Cost categories
+
+Categories are defined in `config/categories.yaml`. To assign your vendors, copy `config/category_rules.example.yaml` to `data/private/category_rules.yaml`, then rerun the import. `uv run python -m finance_copilot review --uncategorized` lists business costs without a category. It only runs in a real terminal.
+
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.
