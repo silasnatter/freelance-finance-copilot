@@ -42,6 +42,11 @@ from finance_copilot.ingestion.ledger import (
     read_ledger_csv,
     top_private_counterparties,
 )
+from finance_copilot.ingestion.manual import (
+    load_manual_bookings,
+    manual_rows,
+    sync_manual_bookings,
+)
 from finance_copilot.ingestion.typed_export import (
     is_typed_mapping,
     load_typed_mapping,
@@ -120,6 +125,27 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
     flows = Counter(str(row["flow"]) for row in rows)
     summary = ", ".join(f"{flow}: {flows[flow]}" for flow in sorted(flows))
     print(f"Imported {count} transactions ({summary}).")
+    return 0
+
+
+def _sync_manual(settings: Settings) -> int:
+    path = settings.paths.manual_bookings
+    if not path.is_file():
+        print(
+            "manual_bookings.yaml not found. Copy config/manual_bookings.example.yaml "
+            "to data/private/manual_bookings.yaml.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        rows = manual_rows(_load_private(load_manual_bookings, path))
+    except PrivateConfigError as error:
+        print(f"Sync stopped, nothing was loaded: {error}", file=sys.stderr)
+        return 1
+    count = sync_manual_bookings(rows, settings.paths.warehouse)
+    flows = Counter(str(row["flow"]) for row in rows)
+    summary = ", ".join(f"{flow}: {flows[flow]}" for flow in sorted(flows))
+    print(f"Synced {count} manual bookings ({summary}).")
     return 0
 
 
@@ -222,6 +248,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     review = commands.add_parser("review", help="list unassigned private counterparties")
     review.add_argument("--top", type=int, default=40)
     commands.add_parser("decide", help="decide open bookings of mixed vendors")
+    commands.add_parser("sync-manual", help="load business payments from the manual list")
     args = parser.parse_args(argv)
 
     active = settings or load_settings()
@@ -233,4 +260,6 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return _review(active, args.top)
     if args.command == "decide":
         return _decide(active)
+    if args.command == "sync-manual":
+        return _sync_manual(active)
     return _ingest(active, args.bank, args.file)
