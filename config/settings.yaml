@@ -6,6 +6,7 @@ paths:
   inbox: inbox
   fx_rates: data/reference/eurofxref-hist.csv
   own_accounts: data/private/own_accounts.yaml
+  business_rules: data/private/business_rules.yaml
 
 llm:
   provider: ollama

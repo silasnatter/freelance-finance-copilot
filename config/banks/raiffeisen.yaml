@@ -1,0 +1,29 @@
+bank: raiffeisen
+format: signed_ledger
+delimiter: ";"
+has_header: false
+columns:
+  booking_date: 0
+  text: 1
+  value_date: 2
+  amount: 3
+  currency: 4
+  timestamp: 5
+date_format: "%d.%m.%Y"
+timestamp_format: "%d.%m.%Y %H:%M:%S:%f"
+decimal_separator: ","
+thousands_separator: "."
+
+# Labels inside the free-text column. Each value ends at the next label.
+text_labels:
+  - Zahlungsempfänger
+  - Empfänger-Kennung
+  - Empfänger
+  - Auftraggeberreferenz
+  - Auftraggeber
+  - Zahlungsreferenz
+  - Verwendungszweck
+  - Mandat
+incoming_counterparty: [Auftraggeber]
+outgoing_counterparty: [Zahlungsempfänger, Empfänger]
+reference: [Verwendungszweck, Zahlungsreferenz]

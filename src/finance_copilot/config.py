@@ -21,6 +21,7 @@ class PathSettings(BaseModel):
     inbox: Path
     fx_rates: Path = Path("data/reference/eurofxref-hist.csv")
     own_accounts: Path = Path("data/private/own_accounts.yaml")
+    business_rules: Path = Path("data/private/business_rules.yaml")
 
 
 class LlmSettings(BaseModel):

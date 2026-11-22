@@ -30,6 +30,17 @@ Repeated and overlapping imports are safe. Reporting currency is EUR, using ECB 
 
 To keep transfers between your own accounts out of revenue and expenses, copy `config/own_accounts.example.yaml` to `data/private/own_accounts.yaml` and list your account holder names.
 
+## Import a mixed-use account
+
+Accounts that also carry private spending, such as Raiffeisen, are private by default. Copy `config/business_rules.example.yaml` to `data/private/business_rules.yaml`, list your customers, vendors and tax payees, then run:
+
+```bash
+uv run python -m finance_copilot ingest --bank raiffeisen --file data/private/raiffeisen-2026.csv
+uv run python -m finance_copilot review
+```
+
+`review` lists the most frequent unassigned counterparties. It only runs in a real terminal, so personal data does not end up in logs or AI chats.
+
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.

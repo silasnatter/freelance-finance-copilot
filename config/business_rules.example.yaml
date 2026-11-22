@@ -1,0 +1,11 @@
+# Copy to data/private/business_rules.yaml. The copy is gitignored.
+# Accounts with mixed use are private by default. Only matches count as business.
+# A term matches whole words in the counterparty, or in the text if there is none.
+income:
+  - Example Customer GmbH
+expense:
+  - SVS
+  - Example Software Vendor
+# Tax payments are tracked separately and do not reduce profit.
+tax:
+  - Finanzamt
