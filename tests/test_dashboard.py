@@ -37,11 +37,14 @@ def warehouse(tmp_path: Path) -> Path:
         connection.execute(
             """
             create table marts.mart_tax_reserve as select * from (values
-              (date '2025-12-01', 2025, '2025-12', 89.00, 0.30, 26.70, 0.00, 26.70, true),
-              (date '2026-01-01', 2026, '2026-01', 790.00, 0.30, 237.00, 50.00, 187.00, true),
-              (date '2026-02-01', 2026, '2026-02', 760.00, 0.30, 228.00, 150.00, 78.00, true)
-            ) as t(month_start, year, year_month, profit_ytd_eur, reserve_rate,
-                   reserve_target_ytd_eur, tax_paid_ytd_eur, reserve_open_eur, is_estimate)
+              (date '2025-12-01', 2025, '2025-12', 500.00, 0.50, 50.00, 0.00, 0.00, 550.00, true),
+              (date '2026-01-01', 2026, '2026-01', 500.00, 0.50, 550.00, 100.00, 50.00,
+               900.00, true),
+              (date '2026-02-01', 2026, '2026-02', 500.00, 0.50, 550.00, 130.00, 150.00,
+               770.00, true)
+            ) as t(month_start, year, year_month, start_balance_eur, income_share,
+                   reserve_added_eur, insurance_paid_eur, tax_paid_eur, target_balance_eur,
+                   is_estimate)
             """
         )
         connection.execute(
@@ -67,16 +70,18 @@ def test_years_are_newest_first(warehouse: Path) -> None:
     assert available_years(warehouse) == [2026, 2025]
 
 
-def test_summary_totals_one_year_and_uses_latest_reserve(warehouse: Path) -> None:
+def test_summary_totals_one_year_and_uses_latest_scalable_target(warehouse: Path) -> None:
     summary = load_summary(warehouse, 2026)
 
     assert summary.revenue_eur == Decimal("1000.00")
     assert summary.costs_eur == Decimal("240.00")
     assert summary.profit_eur == Decimal("760.00")
-    assert summary.reserve_target_eur == Decimal("228.00")
+    assert summary.start_balance_eur == Decimal("500.00")
+    assert summary.income_share == Decimal("0.50")
+    assert summary.reserve_added_eur == Decimal("550.00")
+    assert summary.insurance_paid_eur == Decimal("130.00")
     assert summary.tax_paid_eur == Decimal("150.00")
-    assert summary.reserve_open_eur == Decimal("78.00")
-    assert summary.reserve_rate == Decimal("0.30")
+    assert summary.target_balance_eur == Decimal("770.00")
     assert summary.open_review_bookings == 3
 
 
@@ -153,7 +158,7 @@ def run_app(path: Path, monkeypatch: pytest.MonkeyPatch) -> AppTest:
     return AppTest.from_file(str(APP), default_timeout=30).run()
 
 
-def test_app_shows_kpis_and_marks_reserve_as_estimate(
+def test_app_shows_kpis_and_explains_scalable_target(
     warehouse: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = run_app(warehouse, monkeypatch)
@@ -162,9 +167,10 @@ def test_app_shows_kpis_and_marks_reserve_as_estimate(
     labels = {metric.label: metric.value for metric in app.metric}
     assert labels["Umsatz"] == "1.000,00 €"
     assert labels["Gewinn"] == "760,00 €"
-    assert labels["Rücklage noch offen"] == "78,00 €"
+    assert labels["Soll auf Scalable"] == "770,00 €"
     page_text = " ".join(item.value for item in [*app.caption, *app.warning])
-    assert "Schätzung" in page_text
+    assert "50 %" in page_text
+    assert "Keine Steuerberatung" in page_text
     assert "3 " in " ".join(item.value for item in app.warning)
 
 

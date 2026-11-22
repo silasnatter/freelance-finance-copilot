@@ -50,6 +50,7 @@ from finance_copilot.ingestion.ledger import (
     read_ledger_csv,
     top_private_counterparties,
 )
+from finance_copilot.ingestion.reserve import load_reserve_settings, store_reserve_settings
 from finance_copilot.ingestion.typed_export import (
     is_typed_mapping,
     load_typed_mapping,
@@ -57,6 +58,7 @@ from finance_copilot.ingestion.typed_export import (
 )
 
 BANKS_DIR = PROJECT_ROOT / "config" / "banks"
+DEMO_RESERVE = PROJECT_ROOT / "config" / "reserve.demo.yaml"
 DECIDE_PROMPT = "[g] geschäftlich  [p] privat  [t] Teilbetrag  [s] später  [q] beenden > "
 
 
@@ -69,6 +71,7 @@ def _demo(settings: Settings) -> int:
     mapping = load_bank_mapping(BANKS_DIR / "wise.yaml")
     warehouse = demo_dir / "warehouse.duckdb"
     count = ingest_bank_csv(source, mapping, FxRates.from_ecb_csv(rates_path), warehouse)
+    store_reserve_settings(load_reserve_settings(DEMO_RESERVE), warehouse)
     print(f"Demo data ready: {count} transactions loaded.")
     return 0
 
@@ -107,6 +110,7 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
     rates = FxRates.from_ecb_csv(settings.paths.fx_rates)
     try:
         own_names = _load_private(load_own_names, settings.paths.own_accounts)
+        reserve = _load_private(load_reserve_settings, settings.paths.reserve)
         is_ledger = is_ledger_mapping(mapping_path)
         if is_ledger or is_typed_mapping(mapping_path):
             if not settings.paths.business_rules.is_file():
@@ -125,6 +129,7 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
         print(f"Import stopped, nothing was loaded: {error}", file=sys.stderr)
         return 1
     count = load_bank_rows(rows, settings.paths.warehouse)
+    store_reserve_settings(reserve, settings.paths.warehouse)
     flows = Counter(str(row["flow"]) for row in rows)
     summary = ", ".join(f"{flow}: {flows[flow]}" for flow in sorted(flows))
     print(f"Imported {count} transactions ({summary}).")

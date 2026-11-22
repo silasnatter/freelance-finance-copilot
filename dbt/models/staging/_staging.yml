@@ -43,9 +43,25 @@ models:
       - name: business_amount_eur
         description: "Signed EUR amount that counts for the business."
         data_tests: [not_null]
+      - name: paid_from_reserve
+        description: "True for expenses paid from the Scalable safety pot, such as SVS."
+        data_tests: [not_null]
       - name: fx_rate
         description: "Applied exchange rate."
         data_tests: [not_null]
       - name: fee_eur
         description: "Bank fee in EUR, stored as a positive amount."
+        data_tests: [not_null]
+
+  - name: stg_reserve__settings
+    description: "Settings of the Scalable safety pot. Grain: one row."
+    columns:
+      - name: start_date
+        description: "Date of the start balance."
+        data_tests: [unique, not_null]
+      - name: start_balance_eur
+        description: "Scalable balance at the start of the start date."
+        data_tests: [not_null]
+      - name: income_share
+        description: "Share of business income moved to the pot."
         data_tests: [not_null]

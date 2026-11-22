@@ -1,0 +1,6 @@
+# Copy to data/private/reserve.yaml. The copy is gitignored.
+# Your Scalable balance at the start of start_date.
+start_date: 2026-01-01
+start_balance_eur: 0.00
+# Share of all business income you move to Scalable. 0.5 means 50 %.
+income_share: 0.5

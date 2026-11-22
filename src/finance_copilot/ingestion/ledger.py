@@ -57,6 +57,7 @@ class BusinessRules(_Model):
     expense: tuple[str, ...] = ()
     tax: tuple[str, ...] = ()
     mixed: tuple[str, ...] = ()
+    reserve_paid: tuple[str, ...] = ()
 
 
 def is_ledger_mapping(path: Path) -> bool:
@@ -114,6 +115,11 @@ def classify_by_rules(
         if _matches(terms, haystack):
             return flow
     return "private"
+
+
+def is_paid_from_reserve(flow: str, counterparty: str, text: str, rules: BusinessRules) -> bool:
+    """Mark expenses such as SVS that are paid from the safety pot."""
+    return flow == "expense" and _matches(rules.reserve_paid, normalize_name(counterparty or text))
 
 
 def _amount(raw: str, mapping: LedgerMapping) -> Decimal:
@@ -178,6 +184,7 @@ def parse_ledger_row(
         "currency_original": currency,
         "amount_eur": amount_eur,
         "business_amount_eur": business_amount(flow, amount_eur),
+        "paid_from_reserve": is_paid_from_reserve(flow, counterparty, text, rules),
         "fx_rate": fx_rate,
         "fee_eur": Decimal("0.00"),
     }

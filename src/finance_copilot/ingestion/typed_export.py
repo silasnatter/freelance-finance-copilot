@@ -18,7 +18,11 @@ from pydantic import BaseModel, ConfigDict
 from finance_copilot.ingestion.bank_mapping import BankRowError, business_amount
 from finance_copilot.ingestion.decisions import Decision, apply_decision
 from finance_copilot.ingestion.fx import FxRates
-from finance_copilot.ingestion.ledger import BusinessRules, classify_by_rules
+from finance_copilot.ingestion.ledger import (
+    BusinessRules,
+    classify_by_rules,
+    is_paid_from_reserve,
+)
 
 CENT = Decimal("0.01")
 
@@ -160,6 +164,7 @@ def parse_typed_row(
         "currency_original": currency_original,
         "amount_eur": amount_eur,
         "business_amount_eur": business_amount(flow, amount_eur),
+        "paid_from_reserve": is_paid_from_reserve(flow, counterparty, reference, rules),
         "fx_rate": fx_rate,
         "fee_eur": fee,
     }

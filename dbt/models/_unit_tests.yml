@@ -47,22 +47,30 @@ unit_tests:
         - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", revenue_eur: 0.00, expenses_eur: 0.00, fees_eur: 0.00, profit_eur: 0.00, tax_payments_eur: 0.00, open_review_bookings: 0}
         - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", revenue_eur: 500.00, expenses_eur: -20.00, fees_eur: 0.00, profit_eur: 520.00, tax_payments_eur: 0.00, open_review_bookings: 0}
 
-  - name: tax_reserve_resets_each_year_and_ignores_losses
-    description: "The target follows year-to-date profit, is never negative, and restarts each year."
+  - name: scalable_target_runs_across_years_from_the_start_date
+    description: "Start balance plus the income share, minus insurance and tax paid from the pot."
     model: mart_tax_reserve
-    overrides:
-      vars:
-        tax_reserve_rate: 0.30
     given:
+      - input: ref('stg_reserve__settings')
+        rows:
+          - {start_date: 2026-01-15, start_balance_eur: 1000.00, income_share: 0.50}
       - input: ref('mart_monthly_pnl')
         rows:
-          - {month_start: 2025-12-01, year: 2025, year_month: "2025-12", profit_eur: 1000.00, tax_payments_eur: 0.00}
-          - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", profit_eur: -200.00, tax_payments_eur: 0.00}
-          - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", profit_eur: 1200.00, tax_payments_eur: 50.00}
-          - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", profit_eur: 0.00, tax_payments_eur: 400.00}
+          - {month_start: 2025-12-01, year: 2025, year_month: "2025-12"}
+          - {month_start: 2026-01-01, year: 2026, year_month: "2026-01"}
+          - {month_start: 2026-02-01, year: 2026, year_month: "2026-02"}
+          - {month_start: 2027-01-01, year: 2027, year_month: "2027-01"}
+      - input: ref('fct_transactions')
+        rows:
+          - {transaction_id: before, booking_date: 2026-01-10, flow: income, business_amount_eur: 400.00, paid_from_reserve: false}
+          - {transaction_id: income, booking_date: 2026-01-20, flow: income, business_amount_eur: 1000.00, paid_from_reserve: false}
+          - {transaction_id: svs, booking_date: 2026-01-21, flow: expense, business_amount_eur: -100.00, paid_from_reserve: true}
+          - {transaction_id: software, booking_date: 2026-01-22, flow: expense, business_amount_eur: -50.00, paid_from_reserve: false}
+          - {transaction_id: tax, booking_date: 2026-02-10, flow: tax, business_amount_eur: -200.00, paid_from_reserve: false}
+          - {transaction_id: next-year, booking_date: 2027-01-05, flow: income, business_amount_eur: 200.00, paid_from_reserve: false}
+          - {transaction_id: svs-refund, booking_date: 2027-01-06, flow: expense, business_amount_eur: 20.00, paid_from_reserve: true}
     expect:
       rows:
-        - {month_start: 2025-12-01, year: 2025, year_month: "2025-12", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 0.00, reserve_open_eur: 300.00, is_estimate: true}
-        - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", profit_ytd_eur: -200.00, reserve_rate: 0.30, reserve_target_ytd_eur: 0.00, tax_paid_ytd_eur: 0.00, reserve_open_eur: 0.00, is_estimate: true}
-        - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 50.00, reserve_open_eur: 250.00, is_estimate: true}
-        - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 450.00, reserve_open_eur: -150.00, is_estimate: true}
+        - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 500.00, insurance_paid_eur: 100.00, tax_paid_eur: 0.00, target_balance_eur: 1400.00, is_estimate: true}
+        - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 500.00, insurance_paid_eur: 100.00, tax_paid_eur: 200.00, target_balance_eur: 1200.00, is_estimate: true}
+        - {month_start: 2027-01-01, year: 2027, year_month: "2027-01", start_balance_eur: 1000.00, income_share: 0.50, reserve_added_eur: 600.00, insurance_paid_eur: 80.00, tax_paid_eur: 200.00, target_balance_eur: 1320.00, is_estimate: true}

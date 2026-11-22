@@ -38,12 +38,16 @@ revenue, costs, profit, reserve = st.columns(4)
 revenue.metric("Umsatz", format_eur(summary.revenue_eur))
 costs.metric("Kosten", format_eur(summary.costs_eur))
 profit.metric("Gewinn", format_eur(summary.profit_eur))
-reserve.metric("Rücklage noch offen", format_eur(summary.reserve_open_eur))
+reserve.metric("Soll auf Scalable", format_eur(summary.target_balance_eur))
 
 st.caption(
-    f"Steuerrücklage ist eine Schätzung mit {summary.reserve_rate * 100:.0f} % vom Gewinn: "
-    f"Ziel {format_eur(summary.reserve_target_eur)}, "
-    f"bezahlt {format_eur(summary.tax_paid_eur)}. Keine Steuerberatung."
+    f"Soll auf Scalable nach deiner Regel von {summary.income_share * 100:.0f} % der Einnahmen: "
+    f"Start {format_eur(summary.start_balance_eur)} "
+    f"+ Anteil {format_eur(summary.reserve_added_eur)} "
+    f"− Versicherung {format_eur(summary.insurance_paid_eur)} "
+    f"− Steuern {format_eur(summary.tax_paid_eur)}. "
+    "Vergleiche den Wert mit deinem echten Guthaben. Zinsen sind nicht enthalten. "
+    "Keine Steuerberatung."
 )
 if summary.open_review_bookings:
     st.warning(

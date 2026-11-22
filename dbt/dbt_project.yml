@@ -12,10 +12,6 @@ clean-targets: [target, dbt_packages]
 flags:
   send_anonymous_usage_stats: false
 
-vars:
-  # FR-17: placeholder estimate. Agree on the real rate with a tax advisor.
-  tax_reserve_rate: 0.30
-
 models:
   finance_copilot:
     staging:

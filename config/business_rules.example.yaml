@@ -9,6 +9,9 @@ expense:
 # Tax payments are tracked separately and do not reduce profit.
 tax:
   - Finanzamt
+# Expenses you pay from your Scalable pot. List them under expense as well.
+reserve_paid:
+  - SVS
 # Vendors with private and business purchases. Each booking is decided with `decide`.
 mixed:
   - Example Electronics Store

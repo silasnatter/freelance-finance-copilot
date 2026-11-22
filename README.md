@@ -70,7 +70,11 @@ Decisions are stored in `data/private/booking_decisions.yaml` and survive re-imp
 make dbt-private       # Windows: ./make.ps1 dbt-private
 ```
 
-This creates `marts.mart_monthly_pnl` and `marts.mart_tax_reserve`. The tax reserve is an estimate based on the dbt variable `tax_reserve_rate`, not tax advice.
+This creates `marts.mart_monthly_pnl` and `marts.mart_tax_reserve`.
+
+## Safety pot
+
+The dashboard shows how much should be on your savings account if you move a fixed share of all income there and pay insurance and tax from it. Copy `config/reserve.example.yaml` to `data/private/reserve.yaml`, enter your start balance, and list insurance payees under `reserve_paid` in `business_rules.yaml`. Interest is not included, and this is not tax advice.
 
 ## Privacy
 

@@ -149,6 +149,7 @@ def normalize_row(
         "currency_original": currency,
         "amount_eur": rule.sign * amount_eur,
         "business_amount_eur": business_amount(flow, rule.sign * amount_eur),
+        "paid_from_reserve": False,
         "fx_rate": fx_rate,
         "fee_eur": fee_eur,
     }

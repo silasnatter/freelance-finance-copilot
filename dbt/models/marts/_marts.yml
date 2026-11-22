@@ -79,6 +79,9 @@ models:
       - name: business_amount_eur
         description: "Signed EUR amount that counts for the business, including partial shares."
         data_tests: [not_null]
+      - name: paid_from_reserve
+        description: "True for expenses paid from the Scalable safety pot, such as SVS."
+        data_tests: [not_null]
       - name: fx_rate
         description: "Applied exchange rate."
         data_tests: [not_null]
@@ -121,7 +124,7 @@ models:
         data_tests: [not_null]
 
   - name: mart_tax_reserve
-    description: "Estimated tax reserve, not tax advice. Payments count in the year they are paid, even for an earlier tax year. Grain: one calendar month."
+    description: "Expected balance of the Scalable safety pot under the income share rule. Not tax advice. Grain: one calendar month, running across years."
     columns:
       - name: month_start
         description: "First day of the month and primary key."
@@ -132,23 +135,26 @@ models:
       - name: year_month
         description: "Month formatted as YYYY-MM."
         data_tests: [unique, not_null]
-      - name: profit_ytd_eur
-        description: "Profit from January through this month."
+      - name: start_balance_eur
+        description: "Scalable balance at the start date."
         data_tests: [not_null]
-      - name: reserve_rate
-        description: "Configured reserve rate, the dbt variable tax_reserve_rate."
+      - name: income_share
+        description: "Share of business income moved to the pot."
         data_tests: [not_null]
-      - name: reserve_target_ytd_eur
-        description: "Estimated reserve for the year so far. Never negative."
+      - name: reserve_added_eur
+        description: "Income share since the start date."
         data_tests: [not_null]
-      - name: tax_paid_ytd_eur
-        description: "Tax paid from January through this month."
+      - name: insurance_paid_eur
+        description: "Expenses marked as paid from the pot since the start date, net of refunds."
         data_tests: [not_null]
-      - name: reserve_open_eur
-        description: "Target minus tax paid. Negative means more was paid than the estimate."
+      - name: tax_paid_eur
+        description: "Tax paid since the start date, net of refunds."
+        data_tests: [not_null]
+      - name: target_balance_eur
+        description: "Start balance plus income share, minus insurance and tax. Compare it with the real balance."
         data_tests: [not_null]
       - name: is_estimate
-        description: "Always true, because this value is an estimate."
+        description: "Always true, because interest and other movements are not included."
         data_tests:
           - not_null
           - accepted_values:

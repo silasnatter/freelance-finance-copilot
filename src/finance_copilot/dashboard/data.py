@@ -24,10 +24,12 @@ class Summary:
     revenue_eur: Decimal
     costs_eur: Decimal
     profit_eur: Decimal
-    reserve_rate: Decimal
-    reserve_target_eur: Decimal
+    start_balance_eur: Decimal
+    income_share: Decimal
+    reserve_added_eur: Decimal
+    insurance_paid_eur: Decimal
     tax_paid_eur: Decimal
-    reserve_open_eur: Decimal
+    target_balance_eur: Decimal
     open_review_bookings: int
 
 
@@ -77,7 +79,8 @@ def load_summary(warehouse: Path, year: int) -> Summary:
     reserve = _query(
         warehouse,
         """
-        select reserve_rate, reserve_target_ytd_eur, tax_paid_ytd_eur, reserve_open_eur
+        select start_balance_eur, income_share, reserve_added_eur, insurance_paid_eur,
+               tax_paid_eur, target_balance_eur
         from marts.mart_tax_reserve
         where year = ?
         order by month_start desc
@@ -87,15 +90,17 @@ def load_summary(warehouse: Path, year: int) -> Summary:
     )
     if totals[0] is None or not reserve:
         raise DashboardUnavailableError("no data for this year")
-    rate, target, paid, reserve_open = reserve[0]
+    start, share, added, insurance, tax, target = reserve[0]
     return Summary(
         revenue_eur=Decimal(totals[0]),
         costs_eur=Decimal(totals[1]),
         profit_eur=Decimal(totals[2]),
-        reserve_rate=Decimal(rate),
-        reserve_target_eur=Decimal(target),
-        tax_paid_eur=Decimal(paid),
-        reserve_open_eur=Decimal(reserve_open),
+        start_balance_eur=Decimal(start),
+        income_share=Decimal(share),
+        reserve_added_eur=Decimal(added),
+        insurance_paid_eur=Decimal(insurance),
+        tax_paid_eur=Decimal(tax),
+        target_balance_eur=Decimal(target),
         open_review_bookings=int(totals[3]),
     )
 

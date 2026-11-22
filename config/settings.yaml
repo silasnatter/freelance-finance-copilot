@@ -8,6 +8,7 @@ paths:
   own_accounts: data/private/own_accounts.yaml
   business_rules: data/private/business_rules.yaml
   booking_decisions: data/private/booking_decisions.yaml
+  reserve: data/private/reserve.yaml
 
 # Exports in the private data folder that the pipeline imports.
 imports:

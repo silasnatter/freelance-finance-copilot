@@ -10,6 +10,7 @@ select
     currency_original,
     amount_eur,
     business_amount_eur,
+    paid_from_reserve,
     fx_rate,
     fee_eur,
     business_fee_eur
