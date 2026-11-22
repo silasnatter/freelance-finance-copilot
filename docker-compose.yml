@@ -1,0 +1,32 @@
+# Optional services. The project runs without Docker (RB-03).
+# Usage: docker compose --profile postgres up -d
+#        docker compose --profile ollama up -d
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    profiles: [postgres]
+    environment:
+      POSTGRES_DB: finance_copilot
+      POSTGRES_USER: finance_copilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance_copilot -d finance_copilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [ollama]
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  postgres_data:
+  ollama_data:

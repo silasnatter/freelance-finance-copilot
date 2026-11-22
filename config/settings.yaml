@@ -1,0 +1,11 @@
+# Paths are relative to the project root.
+paths:
+  warehouse: data/warehouse.duckdb
+  demo_data: data/demo
+  private_data: data/private
+  inbox: inbox
+
+llm:
+  provider: ollama
+  # RB-04: real financial data is never sent to an external LLM without this opt-in.
+  external_llm_opt_in: false

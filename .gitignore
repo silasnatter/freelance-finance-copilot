@@ -1,0 +1,50 @@
+# Private data and secrets (RB-04, NFR-05)
+.env
+.env.*
+!.env.example
+data/private/*
+!data/private/.gitkeep
+inbox/*
+!inbox/.gitkeep
+*.duckdb
+*.duckdb.wal
+*.lance/
+lancedb/
+
+# Generated demo data (make demo)
+data/demo/*
+!data/demo/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+logs/
+
+# Dagster
+.dagster/
+.tmp_dagster*/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Claude Code local settings
+.claude/settings.local.json

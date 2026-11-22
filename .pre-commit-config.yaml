@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        exclude: ^uv\.lock$
+
+  - repo: local
+    hooks:
+      - id: check-iban
+        name: block IBANs
+        entry: uv run python -m finance_copilot.devtools.check_iban
+        language: system
+        types: [text]
+        exclude: ^uv\.lock$
+      - id: forbid-private-data
+        name: block private data and warehouse files
+        entry: Private data and warehouse files must not be committed
+        language: fail
+        files: (^data/private/|^inbox/|\.duckdb$|(^|/)\.env$)
+        exclude: (^data/private/|^inbox/)\.gitkeep$

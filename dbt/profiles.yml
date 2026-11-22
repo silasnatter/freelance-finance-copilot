@@ -1,0 +1,7 @@
+finance_copilot:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('FINANCE_COPILOT_WAREHOUSE', 'data/warehouse.duckdb') }}"
+      threads: 4
