@@ -28,6 +28,8 @@ uv run python -m finance_copilot ingest --bank wise --file data/private/wise-tra
 
 Repeated and overlapping imports are safe. Reporting currency is EUR, using ECB reference rates.
 
+To keep transfers between your own accounts out of revenue and expenses, copy `config/own_accounts.example.yaml` to `data/private/own_accounts.yaml` and list your account holder names.
+
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.

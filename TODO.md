@@ -12,7 +12,10 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Deterministische Demo-Buchungen im Wise-Format, `make demo` [FR-01, RB-05]
 - [x] Wise-Import mit YAML-Mapping, Upsert über Bank-ID und EZB-Kursen [FR-02]
 - [x] Wise-Mapping mit echtem Export prüfen, besonders Gebühren [FR-02]
-- [ ] Mapping für das zweite Konto [FR-02]
+- [x] Transfers an eigene Konten erkennen [FR-02]
+- [ ] Mapping für Raiffeisen Österreich, Kundenzahlungen [FR-02]
+- [ ] Mapping für Trade Republic, standardmäßig privat, nur geschäftliche Zahlungen zählen [FR-02]
+- [ ] Mapping für Scalable Capital, standardmäßig privat, SVS und Steuerzahlungen erkennen [FR-02]
 - [ ] Demo-Rechnungen und Beleg-PDFs [FR-01]
 - [ ] Ausgangsrechnungen laden [FR-03]
 
@@ -58,7 +61,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] Eigennutzung mit echten Daten
 
 ## Fragen
-- Bei welcher Bank liegt das zweite Konto?
+- Steuerlogik für Österreich: Behandlung von SVS, Einkommensteuer und Umsatzsteuer mit Steuerberater abstimmen.
 - Welcher Wechselkurs ist steuerlich maßgeblich? Mit Steuerberater abstimmen, Standard sind EZB-Referenzkurse.
 - Welches Ollama-Modell für Text-to-SQL?
 - Welches mehrsprachige Embedding-Modell?

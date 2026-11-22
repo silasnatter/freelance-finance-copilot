@@ -3,13 +3,18 @@
 import argparse
 import sys
 import urllib.request
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
 from finance_copilot.config import PROJECT_ROOT, Settings, load_settings
 from finance_copilot.demo_data.wise import generate_ecb_rates, generate_wise_csv
-from finance_copilot.ingestion.bank_csv import ingest_bank_csv
-from finance_copilot.ingestion.bank_mapping import BankRowError, load_bank_mapping
+from finance_copilot.ingestion.bank_csv import ingest_bank_csv, load_bank_rows, read_bank_csv
+from finance_copilot.ingestion.bank_mapping import (
+    BankRowError,
+    load_bank_mapping,
+    load_own_names,
+)
 from finance_copilot.ingestion.fx import ECB_HISTORY_URL, FxRates, save_ecb_rates
 
 BANKS_DIR = PROJECT_ROOT / "config" / "banks"
@@ -43,15 +48,22 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
     if not settings.paths.fx_rates.is_file():
         print("ECB rates missing. Run: uv run python -m finance_copilot fetch-fx", file=sys.stderr)
         return 1
-    rates = FxRates.from_ecb_csv(settings.paths.fx_rates)
-    try:
-        count = ingest_bank_csv(
-            file, load_bank_mapping(mapping_path), rates, settings.paths.warehouse
+    if not settings.paths.own_accounts.is_file():
+        print(
+            "Hint: no own_accounts.yaml found, transfers to own accounts count as expenses.",
+            file=sys.stderr,
         )
+    rates = FxRates.from_ecb_csv(settings.paths.fx_rates)
+    own_names = load_own_names(settings.paths.own_accounts)
+    try:
+        rows = read_bank_csv(file, load_bank_mapping(mapping_path), rates, own_names)
     except BankRowError as error:
         print(f"Import stopped, nothing was loaded: {error}", file=sys.stderr)
         return 1
-    print(f"Imported {count} transactions.")
+    count = load_bank_rows(rows, settings.paths.warehouse)
+    flows = Counter(str(row["flow"]) for row in rows)
+    summary = ", ".join(f"{flow}: {flows[flow]}" for flow in sorted(flows))
+    print(f"Imported {count} transactions ({summary}).")
     return 0
 
 

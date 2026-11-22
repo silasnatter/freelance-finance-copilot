@@ -1,0 +1,6 @@
+# Copy to data/private/own_accounts.yaml. The copy is gitignored.
+# List every recipient name that stands for one of your own accounts,
+# as it appears in your bank exports. Case and extra spaces do not matter.
+names:
+  - Your Full Name
+  - Your Name As Shown At Another Bank

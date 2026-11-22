@@ -10,15 +10,24 @@ from finance_copilot.ingestion.bank_mapping import BankMapping, normalize_row
 from finance_copilot.ingestion.fx import FxRates
 
 
-def read_bank_csv(path: Path, mapping: BankMapping, rates: FxRates) -> list[dict[str, object]]:
+def read_bank_csv(
+    path: Path,
+    mapping: BankMapping,
+    rates: FxRates,
+    own_names: frozenset[str] = frozenset(),
+) -> list[dict[str, object]]:
     with path.open(encoding="utf-8-sig", newline="") as file:
-        rows = (normalize_row(row, mapping, rates) for row in csv.DictReader(file))
+        rows = (normalize_row(row, mapping, rates, own_names) for row in csv.DictReader(file))
         return [row for row in rows if row is not None]
 
 
 def ingest_bank_csv(path: Path, mapping: BankMapping, rates: FxRates, warehouse: Path) -> int:
     """Upsert one export by transaction id and return the number of accepted rows."""
-    rows = read_bank_csv(path, mapping, rates)
+    return load_bank_rows(read_bank_csv(path, mapping, rates), warehouse)
+
+
+def load_bank_rows(rows: list[dict[str, object]], warehouse: Path) -> int:
+    """Upsert normalized rows by transaction id."""
     if not rows:
         return 0
 

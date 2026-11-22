@@ -59,6 +59,19 @@ def load_bank_mapping(path: Path) -> BankMapping:
     return BankMapping.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
+def normalize_name(value: str) -> str:
+    """Make account holder names comparable across spelling and spacing."""
+    return " ".join(value.split()).casefold()
+
+
+def load_own_names(path: Path) -> frozenset[str]:
+    """Read the private list of own account holder names, if it exists."""
+    if not path.is_file():
+        return frozenset()
+    content = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return frozenset(normalize_name(str(name)) for name in content.get("names") or [])
+
+
 def _decimal(value: str, field: str, row_id: str, bank: str) -> Decimal:
     try:
         parsed = Decimal(value.strip() or "0")
@@ -70,7 +83,10 @@ def _decimal(value: str, field: str, row_id: str, bank: str) -> Decimal:
 
 
 def normalize_row(
-    row: Mapping[str, str], mapping: BankMapping, rates: FxRates
+    row: Mapping[str, str],
+    mapping: BankMapping,
+    rates: FxRates,
+    own_names: frozenset[str] = frozenset(),
 ) -> dict[str, object] | None:
     """Return a normalized transaction, or None if its status is not accepted."""
     if row[mapping.status.column] not in mapping.status.accepted:
@@ -112,13 +128,16 @@ def normalize_row(
     except FxRateMissingError as error:
         raise BankRowError(f"{bank} row {row_id}: {error}") from None
 
+    counterparty = row[rule.counterparty].strip()
+    is_own_account = rule.flow != "conversion" and normalize_name(counterparty) in own_names
+
     return {
         "transaction_id": f"{bank}:{row_id}",
         "bank": bank,
         "booked_at": booked_at,
         "booking_date": booking_date,
-        "flow": rule.flow,
-        "counterparty": row[rule.counterparty].strip(),
+        "flow": "transfer" if is_own_account else rule.flow,
+        "counterparty": counterparty,
         "reference": row[mapping.reference].strip(),
         "amount_original": rule.sign * amount,
         "currency_original": currency,
