@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("setup", "demo", "run", "lint", "typecheck", "test", "dbt", "check")]
+    [ValidateSet("setup", "demo", "run", "lint", "typecheck", "test", "dbt", "dbt-private", "check")]
     [string]$Target = "check"
 )
 
@@ -19,8 +19,14 @@ function Invoke-Lint {
 
 function Invoke-Typecheck { Invoke-Step "uv" @("run", "mypy") }
 function Invoke-Test { Invoke-Step "uv" @("run", "pytest") }
+function Invoke-Demo { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "demo") }
+function Invoke-DbtBuild {
+    param([string]$DbtTarget)
+    Invoke-Step "uv" @("run", "dbt", "build", "--project-dir", "dbt", "--profiles-dir", "dbt", "--target", $DbtTarget)
+}
 function Invoke-Dbt {
-    Invoke-Step "uv" @("run", "dbt", "build", "--project-dir", "dbt", "--profiles-dir", "dbt")
+    Invoke-Demo
+    Invoke-DbtBuild "demo"
 }
 
 switch ($Target) {
@@ -28,12 +34,13 @@ switch ($Target) {
         Invoke-Step "uv" @("sync")
         Invoke-Step "uv" @("run", "pre-commit", "install")
     }
-    "demo" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "demo") }
+    "demo" { Invoke-Demo }
     "run" { Write-Host "make run is implemented in M3 (FR-10)." }
     "lint" { Invoke-Lint }
     "typecheck" { Invoke-Typecheck }
     "test" { Invoke-Test }
     "dbt" { Invoke-Dbt }
+    "dbt-private" { Invoke-DbtBuild "private" }
     "check" {
         Invoke-Lint
         Invoke-Typecheck

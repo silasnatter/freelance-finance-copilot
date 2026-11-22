@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_bank__transactions
+    description: "Typed bank bookings of all accounts. Grain: one booking."
+    columns:
+      - name: transaction_id
+        description: "Stable booking id, prefixed with the bank."
+        data_tests: [unique, not_null]
+      - name: bank
+        description: "Source account."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [wise, raiffeisen, trade_republic]
+      - name: booked_at
+        description: "Booking timestamp."
+        data_tests: [not_null]
+      - name: booking_date
+        description: "Booking date used for reporting."
+        data_tests: [not_null]
+      - name: flow
+        description: "Economic meaning of the booking."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [income, expense, tax, transfer, conversion, private, investment, needs_review]
+      - name: counterparty
+        description: "Sender or recipient, empty if the bank provides none."
+      - name: reference
+        description: "Payment reference or booking text."
+      - name: amount_original
+        description: "Signed amount in the original currency."
+        data_tests: [not_null]
+      - name: currency_original
+        description: "Original currency."
+        data_tests: [not_null]
+      - name: amount_eur
+        description: "Signed booking amount in EUR."
+        data_tests: [not_null]
+      - name: business_amount_eur
+        description: "Signed EUR amount that counts for the business."
+        data_tests: [not_null]
+      - name: fx_rate
+        description: "Applied exchange rate."
+        data_tests: [not_null]
+      - name: fee_eur
+        description: "Bank fee in EUR, stored as a positive amount."
+        data_tests: [not_null]

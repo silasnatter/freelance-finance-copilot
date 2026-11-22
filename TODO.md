@@ -26,9 +26,13 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 
 ## M2 – dbt-Modell
 - [ ] Seeds für Kategorien, Regeln, Steuerkonfiguration und Kunden
-- [ ] Staging-Modelle [NFR-02]
-- [ ] Intermediate-Modelle und regelbasierte Kategorisierung [FR-05]
-- [ ] Marts: `fct_*`, `dim_*`, `mart_*` [FR-03, NFR-02]
+- [x] Staging für Bankbuchungen [NFR-02]
+- [x] Intermediate für geschäftliche Beträge und Gebühren [NFR-02]
+- [x] Marts `fct_transactions`, `mart_monthly_pnl`, `mart_tax_reserve` mit Unit- und Datentests [FR-17, NFR-02]
+- [ ] Marts mit echten Daten bauen und prüfen [NFR-02]
+- [ ] Steuerrücklage-Satz mit Steuerberater festlegen, aktuell Platzhalter 30 % [FR-17]
+- [ ] Kategorien und regelbasierte Kategorisierung, `dim_category`, `dim_counterparty` [FR-05]
+- [ ] Rechnungs-Marts `fct_invoices`, `dim_customer`, `mart_open_invoices` [FR-03]
 - [ ] `dbt-expectations` und dbt docs [NFR-02, NFR-09]
 
 ## M3 – Orchestrierung und Dashboard
@@ -55,7 +59,6 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 
 ## M7 – Portfolio-Feinschliff
 - [ ] Review-Oberfläche [FR-11]
-- [ ] Steuerrücklage als Schätzung [FR-17]
 - [ ] README, Architekturdiagramm, Demo-GIF, ADRs [NFR-09]
 
 ## M8 – Stretch

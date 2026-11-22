@@ -1,0 +1,68 @@
+unit_tests:
+  - name: business_fee_counts_for_wise_and_business_rows_only
+    description: "Wise is a business pass-through. Fees on private rows of other banks do not count."
+    model: int_transactions_business
+    given:
+      - input: ref('stg_bank__transactions')
+        rows:
+          - {transaction_id: wise-income, bank: wise, flow: income, fee_eur: 2.00}
+          - {transaction_id: wise-conversion, bank: wise, flow: conversion, fee_eur: 3.00}
+          - {transaction_id: wise-transfer, bank: wise, flow: transfer, fee_eur: 1.00}
+          - {transaction_id: tr-private, bank: trade_republic, flow: private, fee_eur: 5.00}
+          - {transaction_id: tr-investment, bank: trade_republic, flow: investment, fee_eur: 1.00}
+          - {transaction_id: tr-expense, bank: trade_republic, flow: expense, fee_eur: 0.50}
+    expect:
+      rows:
+        - {transaction_id: wise-income, business_fee_eur: 2.00}
+        - {transaction_id: wise-conversion, business_fee_eur: 3.00}
+        - {transaction_id: wise-transfer, business_fee_eur: 1.00}
+        - {transaction_id: tr-private, business_fee_eur: 0.00}
+        - {transaction_id: tr-investment, business_fee_eur: 0.00}
+        - {transaction_id: tr-expense, business_fee_eur: 0.50}
+
+  - name: monthly_pnl_uses_business_amounts_and_keeps_empty_months
+    description: "Partial shares and refunds count correctly. Private and open rows do not."
+    model: mart_monthly_pnl
+    given:
+      - input: ref('fct_transactions')
+        rows:
+          - {transaction_id: a, booking_date: 2026-01-05, flow: income, amount_eur: 1000.00, business_amount_eur: 1000.00, business_fee_eur: 10.00}
+          - {transaction_id: b, booking_date: 2026-01-06, flow: expense, amount_eur: -200.00, business_amount_eur: -200.00, business_fee_eur: 0.00}
+          - {transaction_id: c, booking_date: 2026-01-07, flow: expense, amount_eur: -100.00, business_amount_eur: -30.00, business_fee_eur: 0.00}
+          - {transaction_id: d, booking_date: 2026-01-08, flow: tax, amount_eur: -150.00, business_amount_eur: -150.00, business_fee_eur: 0.00}
+          - {transaction_id: e, booking_date: 2026-01-09, flow: private, amount_eur: -500.00, business_amount_eur: 0.00, business_fee_eur: 0.00}
+          - {transaction_id: f, booking_date: 2026-01-10, flow: needs_review, amount_eur: -40.00, business_amount_eur: 0.00, business_fee_eur: 0.00}
+          - {transaction_id: g, booking_date: 2026-03-02, flow: expense, amount_eur: 20.00, business_amount_eur: 20.00, business_fee_eur: 0.00}
+          - {transaction_id: h, booking_date: 2026-03-03, flow: income, amount_eur: 500.00, business_amount_eur: 500.00, business_fee_eur: 0.00}
+      - input: ref('dim_date')
+        rows:
+          - {date_day: 2025-12-31, year: 2025, month: 12, year_month: "2025-12"}
+          - {date_day: 2026-01-01, year: 2026, month: 1, year_month: "2026-01"}
+          - {date_day: 2026-02-01, year: 2026, month: 2, year_month: "2026-02"}
+          - {date_day: 2026-03-01, year: 2026, month: 3, year_month: "2026-03"}
+          - {date_day: 2026-04-01, year: 2026, month: 4, year_month: "2026-04"}
+    expect:
+      rows:
+        - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", revenue_eur: 1000.00, expenses_eur: 230.00, fees_eur: 10.00, profit_eur: 760.00, tax_payments_eur: 150.00, open_review_bookings: 1}
+        - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", revenue_eur: 0.00, expenses_eur: 0.00, fees_eur: 0.00, profit_eur: 0.00, tax_payments_eur: 0.00, open_review_bookings: 0}
+        - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", revenue_eur: 500.00, expenses_eur: -20.00, fees_eur: 0.00, profit_eur: 520.00, tax_payments_eur: 0.00, open_review_bookings: 0}
+
+  - name: tax_reserve_resets_each_year_and_ignores_losses
+    description: "The target follows year-to-date profit, is never negative, and restarts each year."
+    model: mart_tax_reserve
+    overrides:
+      vars:
+        tax_reserve_rate: 0.30
+    given:
+      - input: ref('mart_monthly_pnl')
+        rows:
+          - {month_start: 2025-12-01, year: 2025, year_month: "2025-12", profit_eur: 1000.00, tax_payments_eur: 0.00}
+          - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", profit_eur: -200.00, tax_payments_eur: 0.00}
+          - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", profit_eur: 1200.00, tax_payments_eur: 50.00}
+          - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", profit_eur: 0.00, tax_payments_eur: 400.00}
+    expect:
+      rows:
+        - {month_start: 2025-12-01, year: 2025, year_month: "2025-12", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 0.00, reserve_open_eur: 300.00, is_estimate: true}
+        - {month_start: 2026-01-01, year: 2026, year_month: "2026-01", profit_ytd_eur: -200.00, reserve_rate: 0.30, reserve_target_ytd_eur: 0.00, tax_paid_ytd_eur: 0.00, reserve_open_eur: 0.00, is_estimate: true}
+        - {month_start: 2026-02-01, year: 2026, year_month: "2026-02", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 50.00, reserve_open_eur: 250.00, is_estimate: true}
+        - {month_start: 2026-03-01, year: 2026, year_month: "2026-03", profit_ytd_eur: 1000.00, reserve_rate: 0.30, reserve_target_ytd_eur: 300.00, tax_paid_ytd_eur: 450.00, reserve_open_eur: -150.00, is_estimate: true}

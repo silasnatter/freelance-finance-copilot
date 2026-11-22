@@ -1,4 +1,4 @@
-.PHONY: setup demo run lint typecheck test dbt check
+.PHONY: setup demo run lint typecheck test dbt dbt-private check
 
 DBT_ARGS = --project-dir dbt --profiles-dir dbt
 
@@ -22,7 +22,10 @@ typecheck:
 test:
 	uv run pytest
 
-dbt:
-	uv run dbt build $(DBT_ARGS)
+dbt: demo
+	uv run dbt build $(DBT_ARGS) --target demo
+
+dbt-private:
+	uv run dbt build $(DBT_ARGS) --target private
 
 check: lint typecheck test dbt

@@ -52,6 +52,16 @@ uv run python -m finance_copilot decide
 
 Decisions are stored in `data/private/booking_decisions.yaml` and survive re-imports.
 
+## Build the reports
+
+`make check` and CI build the dbt models on demo data only. To build them from your own imported data:
+
+```bash
+make dbt-private       # Windows: ./make.ps1 dbt-private
+```
+
+This creates `marts.mart_monthly_pnl` and `marts.mart_tax_reserve`. The tax reserve is an estimate based on the dbt variable `tax_reserve_rate`, not tax advice.
+
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.

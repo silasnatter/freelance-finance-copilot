@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: int_transactions_business
+    description: "Bookings with the fee share that counts for the business. Grain: one booking."
+    columns:
+      - name: transaction_id
+        description: "Stable booking id."
+        data_tests: [unique, not_null]
+      - name: business_fee_eur
+        description: "Fee that counts as a business cost. Fees on private rows are excluded."
+        data_tests: [not_null]

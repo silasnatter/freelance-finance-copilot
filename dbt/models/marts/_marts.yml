@@ -35,3 +35,123 @@ models:
       - name: is_weekend
         description: "True on Saturday and Sunday."
         data_tests: [not_null]
+
+  - name: fct_transactions
+    description: "All bookings with their business share. Grain: one booking."
+    columns:
+      - name: transaction_id
+        description: "Stable booking id and primary key."
+        data_tests: [unique, not_null]
+      - name: bank
+        description: "Source account."
+        data_tests: [not_null]
+      - name: booked_at
+        description: "Booking timestamp."
+        data_tests: [not_null]
+      - name: booking_date
+        description: "Booking date used for reporting."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: flow
+        description: "income, expense, tax, transfer, conversion, private, investment or needs_review."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [income, expense, tax, transfer, conversion, private, investment, needs_review]
+      - name: counterparty
+        description: "Sender or recipient, empty if the bank provides none."
+      - name: reference
+        description: "Payment reference or booking text."
+      - name: amount_original
+        description: "Signed amount in the original currency."
+        data_tests: [not_null]
+      - name: currency_original
+        description: "Original currency."
+        data_tests: [not_null]
+      - name: amount_eur
+        description: "Signed booking amount in EUR."
+        data_tests: [not_null]
+      - name: business_amount_eur
+        description: "Signed EUR amount that counts for the business, including partial shares."
+        data_tests: [not_null]
+      - name: fx_rate
+        description: "Applied exchange rate."
+        data_tests: [not_null]
+      - name: fee_eur
+        description: "Bank fee in EUR."
+        data_tests: [not_null]
+      - name: business_fee_eur
+        description: "Fee that counts as a business cost."
+        data_tests: [not_null]
+
+  - name: mart_monthly_pnl
+    description: "Business revenue, costs and profit in EUR. Grain: one calendar month, including empty months."
+    columns:
+      - name: month_start
+        description: "First day of the month and primary key."
+        data_tests: [unique, not_null]
+      - name: year
+        description: "Calendar year."
+        data_tests: [not_null]
+      - name: year_month
+        description: "Month formatted as YYYY-MM."
+        data_tests: [unique, not_null]
+      - name: revenue_eur
+        description: "Gross business income."
+        data_tests: [not_null]
+      - name: expenses_eur
+        description: "Business expenses as a positive amount, reduced by refunds."
+        data_tests: [not_null]
+      - name: fees_eur
+        description: "Bank fees that count as business costs."
+        data_tests: [not_null]
+      - name: profit_eur
+        description: "Revenue minus expenses and fees. Tax payments do not reduce it."
+        data_tests: [not_null]
+      - name: tax_payments_eur
+        description: "Tax paid in the month, reduced by tax refunds."
+        data_tests: [not_null]
+      - name: open_review_bookings
+        description: "Bookings of mixed vendors not decided yet. They are not part of profit."
+        data_tests: [not_null]
+
+  - name: mart_tax_reserve
+    description: "Estimated tax reserve, not tax advice. Payments count in the year they are paid, even for an earlier tax year. Grain: one calendar month."
+    columns:
+      - name: month_start
+        description: "First day of the month and primary key."
+        data_tests: [unique, not_null]
+      - name: year
+        description: "Calendar year."
+        data_tests: [not_null]
+      - name: year_month
+        description: "Month formatted as YYYY-MM."
+        data_tests: [unique, not_null]
+      - name: profit_ytd_eur
+        description: "Profit from January through this month."
+        data_tests: [not_null]
+      - name: reserve_rate
+        description: "Configured reserve rate, the dbt variable tax_reserve_rate."
+        data_tests: [not_null]
+      - name: reserve_target_ytd_eur
+        description: "Estimated reserve for the year so far. Never negative."
+        data_tests: [not_null]
+      - name: tax_paid_ytd_eur
+        description: "Tax paid from January through this month."
+        data_tests: [not_null]
+      - name: reserve_open_eur
+        description: "Target minus tax paid. Negative means more was paid than the estimate."
+        data_tests: [not_null]
+      - name: is_estimate
+        description: "Always true, because this value is an estimate."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+                quote: false

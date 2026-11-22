@@ -1,0 +1,16 @@
+select
+    transaction_id,
+    bank,
+    booked_at,
+    booking_date,
+    flow,
+    counterparty,
+    reference,
+    amount_original,
+    currency_original,
+    amount_eur,
+    business_amount_eur,
+    fx_rate,
+    fee_eur,
+    business_fee_eur
+from {{ ref('int_transactions_business') }}

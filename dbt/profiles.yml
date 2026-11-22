@@ -1,7 +1,12 @@
 finance_copilot:
-  target: local
+  # Demo is the default, so checks and CI never touch real data.
+  target: demo
   outputs:
-    local:
+    demo:
+      type: duckdb
+      path: data/demo/warehouse.duckdb
+      threads: 4
+    private:
       type: duckdb
       path: "{{ env_var('FINANCE_COPILOT_WAREHOUSE', 'data/warehouse.duckdb') }}"
       threads: 4
