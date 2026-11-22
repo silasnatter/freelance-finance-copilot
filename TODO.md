@@ -11,7 +11,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 ## M1 – Demo-Daten und Ingestion
 - [x] Deterministische Demo-Buchungen im Wise-Format, `make demo` [FR-01, RB-05]
 - [x] Wise-Import mit YAML-Mapping, Upsert über Bank-ID und EZB-Kursen [FR-02]
-- [ ] Wise-Mapping mit echtem Export prüfen, besonders Gebühren [FR-02]
+- [x] Wise-Mapping mit echtem Export prüfen, besonders Gebühren [FR-02]
 - [ ] Mapping für das zweite Konto [FR-02]
 - [ ] Demo-Rechnungen und Beleg-PDFs [FR-01]
 - [ ] Ausgangsrechnungen laden [FR-03]
