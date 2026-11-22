@@ -52,16 +52,6 @@ uv run python -m finance_copilot decide
 
 Decisions are stored in `data/private/booking_decisions.yaml` and survive re-imports.
 
-## Accounts without a free export
-
-For accounts like Scalable Capital, list only business-relevant payments. Copy `config/manual_bookings.example.yaml` to `data/private/manual_bookings.yaml`, then run:
-
-```bash
-uv run python -m finance_copilot sync-manual
-```
-
-The warehouse always mirrors this file, so edited or removed entries are updated on the next sync.
-
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.

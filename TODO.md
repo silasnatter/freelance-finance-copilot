@@ -19,8 +19,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] Stabilität der Raiffeisen-ID mit einem zweiten, überlappenden Export prüfen [FR-02]
 - [x] Mapping für Trade Republic, standardmäßig privat, Investments getrennt [FR-02]
 - [x] Trade-Republic-Regeln mit echtem Export befüllen und offene Buchungen entscheiden [FR-02]
-- [x] Manuelle Liste für Scalable, weil der CSV-Export Premium erfordert: nur SVS und Steuerzahlungen [FR-02, RB-01]
-- [ ] SVS- und Steuerzahlungen von Scalable eintragen [FR-02]
+- [x] Scalable bewusst nicht importieren: nur Transfers zwischen eigenen Konten, SVS und Steuern laufen über Raiffeisen [FR-02]
 - [ ] Markierung für abzuschreibende Anschaffungen über der GWG-Grenze
 - [ ] Demo-Rechnungen und Beleg-PDFs [FR-01]
 - [ ] Ausgangsrechnungen laden [FR-03]
