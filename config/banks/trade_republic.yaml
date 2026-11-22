@@ -1,0 +1,41 @@
+bank: trade_republic
+format: typed_export
+columns:
+  id: transaction_id
+  datetime: datetime
+  date: date
+  type: type
+  amount: amount
+  fee: fee
+  currency: currency
+  original_amount: original_amount
+  original_currency: original_currency
+  fx_rate: fx_rate
+  counterparty: [counterparty_name, name, description]
+  reference: [payment_reference, description]
+
+# Unknown types stop the import, so a new kind of booking is never guessed.
+# Cash movements: own accounts and business rules apply, otherwise private.
+rule_based_types:
+  - CARD_TRANSACTION
+  - CARD_TRANSACTION_INTERNATIONAL
+  - TRANSFER_INBOUND
+  - TRANSFER_OUTBOUND
+  - TRANSFER_INSTANT_INBOUND
+  - TRANSFER_INSTANT_OUTBOUND
+  - TRANSFER_DIRECT_DEBIT_INBOUND
+# Private wealth: never matched against business rules.
+investment_types:
+  - BUY
+  - SELL
+  - DIVIDEND
+  - EARNINGS
+  - INTEREST_PAYMENT
+  - BENEFITS_SAVEBACK
+  - TAX_OPTIMIZATION
+  - FREE_RECEIPT
+private_types:
+  - GIFT
+# These bookings move securities without cash and have no amount.
+amountless_types:
+  - FREE_RECEIPT

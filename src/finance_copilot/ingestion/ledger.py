@@ -98,7 +98,9 @@ def _matches(terms: Sequence[str], haystack: str) -> bool:
     return False
 
 
-def _classify(counterparty: str, text: str, own_names: frozenset[str], rules: BusinessRules) -> str:
+def classify_by_rules(
+    counterparty: str, text: str, own_names: frozenset[str], rules: BusinessRules
+) -> str:
     if counterparty and normalize_name(counterparty) in own_names:
         return "transfer"
     haystack = normalize_name(counterparty or text)
@@ -162,7 +164,7 @@ def parse_ledger_row(
     labels = mapping.incoming_counterparty if amount >= 0 else mapping.outgoing_counterparty
     counterparty = _first(labeled, labels)
     digest = hashlib.sha256("\x1f".join([*fields, str(occurrence)]).encode()).hexdigest()
-    flow = _classify(counterparty, text, own_names, rules)
+    flow = classify_by_rules(counterparty, text, own_names, rules)
 
     return {
         "transaction_id": f"{bank}:{digest[:32]}",

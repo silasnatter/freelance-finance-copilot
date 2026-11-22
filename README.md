@@ -36,8 +36,11 @@ Accounts that also carry private spending, such as Raiffeisen, are private by de
 
 ```bash
 uv run python -m finance_copilot ingest --bank raiffeisen --file data/private/raiffeisen-2026.csv
+uv run python -m finance_copilot ingest --bank trade_republic --file data/private/trade-republic-2026.csv
 uv run python -m finance_copilot review
 ```
+
+Trade Republic investments, interest and dividends are stored as `investment` and never count as business income or expenses.
 
 `review` lists the most frequent unassigned counterparties. It only runs in a real terminal, so personal data does not end up in logs or AI chats.
 

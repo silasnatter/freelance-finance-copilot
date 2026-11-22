@@ -42,6 +42,11 @@ from finance_copilot.ingestion.ledger import (
     read_ledger_csv,
     top_private_counterparties,
 )
+from finance_copilot.ingestion.typed_export import (
+    is_typed_mapping,
+    load_typed_mapping,
+    read_typed_csv,
+)
 
 BANKS_DIR = PROJECT_ROOT / "config" / "banks"
 DECIDE_PROMPT = "[g] geschäftlich  [p] privat  [t] Teilbetrag  [s] später  [q] beenden > "
@@ -94,13 +99,18 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
     rates = FxRates.from_ecb_csv(settings.paths.fx_rates)
     try:
         own_names = _load_private(load_own_names, settings.paths.own_accounts)
-        if is_ledger_mapping(mapping_path):
+        is_ledger = is_ledger_mapping(mapping_path)
+        if is_ledger or is_typed_mapping(mapping_path):
             if not settings.paths.business_rules.is_file():
                 print("Hint: no business_rules.yaml found, all rows stay private.", file=sys.stderr)
             rules = _load_private(load_business_rules, settings.paths.business_rules)
             decisions = _load_private(load_decisions, settings.paths.booking_decisions)
-            ledger = load_ledger_mapping(mapping_path)
-            rows = read_ledger_csv(file, ledger, rates, own_names, rules, decisions)
+            if is_ledger:
+                ledger = load_ledger_mapping(mapping_path)
+                rows = read_ledger_csv(file, ledger, rates, own_names, rules, decisions)
+            else:
+                typed = load_typed_mapping(mapping_path)
+                rows = read_typed_csv(file, typed, rates, own_names, rules, decisions)
         else:
             rows = read_bank_csv(file, load_bank_mapping(mapping_path), rates, own_names)
     except (BankRowError, PrivateConfigError) as error:
