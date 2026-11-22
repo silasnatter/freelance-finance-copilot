@@ -6,7 +6,12 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from finance_copilot.config import PROJECT_ROOT, load_settings
-from finance_copilot.dashboard.charts import monthly_long, profit_chart, revenue_cost_chart
+from finance_copilot.dashboard.charts import (
+    monthly_long,
+    profit_chart,
+    revenue_cost_chart,
+    top_expenses_chart,
+)
 from finance_copilot.dashboard.data import (
     DashboardUnavailableError,
     available_years,
@@ -170,6 +175,15 @@ def test_charts_use_a_single_y_scale_and_tooltips(warehouse: Path) -> None:
         spec = chart.to_dict()
         assert "layer" not in spec
         assert spec["encoding"]["tooltip"]
+
+
+def test_category_chart_keeps_every_label() -> None:
+    rows = [(f"Kategorie {number}", Decimal("10.00")) for number in range(6)]
+
+    spec = top_expenses_chart(rows, dark=False).to_dict()
+
+    assert spec["encoding"]["y"]["axis"]["labelOverlap"] is False
+    assert spec["height"] >= 6 * 34
 
 
 def run_app(path: Path, monkeypatch: pytest.MonkeyPatch) -> AppTest:

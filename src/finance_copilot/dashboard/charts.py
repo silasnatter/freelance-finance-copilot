@@ -101,13 +101,17 @@ def top_expenses_chart(
         .transform_calculate(betrag_text=EUR_TEXT)
         .mark_bar(cornerRadiusEnd=4, color=COLORS[dark][COSTS])
         .encode(
-            y=alt.Y("name:N", sort=order, axis=alt.Axis(title=None, ticks=False, labelLimit=220)),
+            y=alt.Y(
+                "name:N",
+                sort=order,
+                axis=alt.Axis(title=None, ticks=False, labelLimit=220, labelOverlap=False),
+            ),
             x=alt.X("betrag:Q", axis=_value_axis()),
             tooltip=[
                 alt.Tooltip("name:N", title=label),
                 alt.Tooltip("betrag_text:N", title="Kosten"),
             ],
         )
-        .properties(height=max(160, 34 * len(values)))
+        .properties(height=max(204, 38 * len(values)))
     )
     return chart
