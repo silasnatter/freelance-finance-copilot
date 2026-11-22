@@ -1,0 +1,78 @@
+# Test questions on the synthetic demo data (FR-12, NFR-08).
+# An answer is correct if it returns the same rows and contains every expected column.
+questions:
+  - id: revenue_year
+    question: Wie hoch war mein Umsatz 2026?
+    expected_sql: select sum(revenue_eur) from marts.mart_monthly_pnl where year = 2026
+  - id: costs_year
+    question: Wie hoch waren meine Gesamtkosten 2026 inklusive Gebühren?
+    expected_sql: select sum(expenses_eur + fees_eur) from marts.mart_monthly_pnl where year = 2026
+  - id: profit_year
+    question: Wie hoch war mein Gewinn 2026?
+    expected_sql: select sum(profit_eur) from marts.mart_monthly_pnl where year = 2026
+  - id: revenue_march
+    question: Wie hoch war der Umsatz im März 2026?
+    expected_sql: select revenue_eur from marts.mart_monthly_pnl where year_month = '2026-03'
+  - id: profit_june
+    question: Wie hoch war der Gewinn im Juni 2026?
+    expected_sql: select profit_eur from marts.mart_monthly_pnl where year_month = '2026-06'
+  - id: best_month
+    question: In welchem Monat war der Umsatz am höchsten?
+    expected_sql: select year_month from marts.mart_monthly_pnl order by revenue_eur desc limit 1
+  - id: worst_profit_month
+    question: In welchem Monat war der Gewinn am niedrigsten?
+    expected_sql: select year_month from marts.mart_monthly_pnl order by profit_eur limit 1
+  - id: revenue_by_month
+    question: Zeig mir den Umsatz pro Monat für 2026.
+    expected_sql: select year_month, revenue_eur from marts.mart_monthly_pnl where year = 2026
+  - id: costs_by_category
+    question: Wie hoch waren meine Kosten 2026 pro Kategorie?
+    expected_sql: >-
+      select category_name, amount_eur from marts.mart_expenses_by_category where year = 2026
+  - id: software_costs
+    question: Wie viel habe ich 2026 für Software & Hosting ausgegeben?
+    expected_sql: >-
+      select amount_eur from marts.mart_expenses_by_category
+      where year = 2026 and category_name = 'Software & Hosting'
+  - id: bank_fees
+    question: Wie hoch waren die Bankgebühren 2026?
+    expected_sql: >-
+      select amount_eur from marts.mart_expenses_by_category
+      where year = 2026 and category_name = 'Bankgebühren'
+  - id: top_category
+    question: Welche Kostenkategorie war 2026 am teuersten?
+    expected_sql: >-
+      select category_name from marts.mart_expenses_by_category
+      where year = 2026 order by amount_eur desc limit 1
+  - id: income_count
+    question: Wie viele Einnahmen-Buchungen gibt es?
+    expected_sql: select count(*) from marts.fct_transactions where flow = 'income'
+  - id: expense_count
+    question: Wie viele Ausgaben-Buchungen gibt es?
+    expected_sql: select count(*) from marts.fct_transactions where flow = 'expense'
+  - id: vendor_total
+    question: Wie viel habe ich insgesamt an Coworking Mitte GmbH bezahlt?
+    expected_sql: >-
+      select -sum(business_amount_eur) from marts.fct_transactions
+      where flow = 'expense' and counterparty = 'Coworking Mitte GmbH'
+  - id: top_vendors
+    question: An welche 3 Empfänger habe ich am meisten bezahlt?
+    expected_sql: >-
+      select counterparty from marts.fct_transactions where flow = 'expense'
+      group by 1 order by sum(business_amount_eur) limit 3
+  - id: average_revenue
+    question: Wie hoch war der durchschnittliche Monatsumsatz 2026?
+    expected_sql: select avg(revenue_eur) from marts.mart_monthly_pnl where year = 2026
+  - id: pot_target
+    question: Wie viel sollte Ende 2026 auf Scalable liegen?
+    expected_sql: >-
+      select target_balance_eur from marts.mart_tax_reserve
+      where year_month = '2026-12'
+  - id: revenue_q1
+    question: Wie hoch war der Umsatz im ersten Quartal 2026?
+    expected_sql: >-
+      select sum(revenue_eur) from marts.mart_monthly_pnl
+      where year_month between '2026-01' and '2026-03'
+  - id: profitable_months
+    question: In wie vielen Monaten lag der Gewinn über 5000 Euro?
+    expected_sql: select count(*) from marts.mart_monthly_pnl where profit_eur > 5000

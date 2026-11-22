@@ -22,5 +22,7 @@ imports:
 
 llm:
   provider: ollama
+  model: qwen2.5-coder:3b
+  base_url: http://127.0.0.1:11434
   # RB-04: real financial data is never sent to an external LLM without this opt-in.
   external_llm_opt_in: false

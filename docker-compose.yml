@@ -8,7 +8,8 @@ services:
     environment:
       POSTGRES_DB: finance_copilot
       POSTGRES_USER: finance_copilot
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      # Without a password from .env, the Postgres image refuses to start.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

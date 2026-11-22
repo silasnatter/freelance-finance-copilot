@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("setup", "demo", "run", "run-private", "dagster", "dagster-private", "lint", "typecheck", "test", "dbt", "dbt-private", "check")]
+    [ValidateSet("setup", "demo", "run", "run-private", "dagster", "dagster-private", "eval", "lint", "typecheck", "test", "dbt", "dbt-private", "check")]
     [string]$Target = "check"
 )
 
@@ -39,6 +39,7 @@ switch ($Target) {
     "run-private" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "run", "--private") }
     "dagster" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "orchestrator") }
     "dagster-private" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "orchestrator", "--private") }
+    "eval" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "eval-sql") }
     "lint" { Invoke-Lint }
     "typecheck" { Invoke-Typecheck }
     "test" { Invoke-Test }

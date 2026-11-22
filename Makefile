@@ -1,4 +1,4 @@
-.PHONY: setup demo run run-private dagster dagster-private lint typecheck test dbt dbt-private check
+.PHONY: setup demo run run-private dagster dagster-private eval lint typecheck test dbt dbt-private check
 
 DBT_ARGS = --project-dir dbt --profiles-dir dbt
 
@@ -20,6 +20,9 @@ dagster:
 
 dagster-private:
 	uv run python -m finance_copilot orchestrator --private
+
+eval:
+	uv run python -m finance_copilot eval-sql
 
 lint:
 	uv run ruff check .

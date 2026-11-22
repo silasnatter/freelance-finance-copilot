@@ -301,6 +301,33 @@ def _pipeline(settings: Settings, target: DataTarget) -> int:
     return 1
 
 
+def _eval_sql(settings: Settings) -> int:
+    """Run the text-to-SQL test set. It only uses synthetic demo data."""
+    from finance_copilot.llm.evaluation import load_questions, run_evaluation  # noqa: PLC0415
+    from finance_copilot.llm.provider import (  # noqa: PLC0415
+        LlmConfigurationError,
+        LlmUnavailableError,
+        build_provider,
+    )
+
+    warehouse = settings.paths.demo_data / "warehouse.duckdb"
+    if not warehouse.is_file():
+        print("Demo data missing. Run: make run", file=sys.stderr)
+        return 1
+    questions = load_questions(PROJECT_ROOT / "evals" / "text_to_sql.yaml")
+    try:
+        report = run_evaluation(questions, build_provider(settings, os.environ), warehouse)
+    except (LlmUnavailableError, LlmConfigurationError):
+        print(
+            "Ollama is not available. Run: docker compose --profile ollama up -d", file=sys.stderr
+        )
+        return 1
+    for item in report.items:
+        print(f"{'ok  ' if item.passed else 'FAIL'} {item.id}: {item.reason} ({item.seconds:.1f}s)")
+    print(f"Correct: {report.correct}/{report.total}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     parser = argparse.ArgumentParser(prog="finance_copilot")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -315,6 +342,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         "--uncategorized", action="store_true", help="list business costs without a category"
     )
     commands.add_parser("decide", help="decide open bookings of mixed vendors")
+    commands.add_parser("eval-sql", help="measure text-to-SQL on demo data")
     for name, description in (
         ("pipeline", "run imports and dbt once"),
         ("run", "run the pipeline and open the dashboard"),
@@ -333,6 +361,8 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return _review(active, args.top, args.uncategorized)
     if args.command == "decide":
         return _decide(active)
+    if args.command == "eval-sql":
+        return _eval_sql(active)
     if args.command in ("pipeline", "run", "orchestrator"):
         target: DataTarget = "private" if args.private else "demo"
         if args.command == "orchestrator":

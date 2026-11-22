@@ -33,6 +33,8 @@ class LlmSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     provider: Literal["ollama", "claude"] = "ollama"
+    model: str = "qwen2.5-coder:3b"
+    base_url: str = "http://127.0.0.1:11434"
     external_llm_opt_in: bool = False
 
 
