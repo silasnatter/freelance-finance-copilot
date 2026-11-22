@@ -41,6 +41,14 @@ uv run python -m finance_copilot review
 
 `review` lists the most frequent unassigned counterparties. It only runs in a real terminal, so personal data does not end up in logs or AI chats.
 
+Vendors with both private and business purchases go under `mixed`. Their bookings stay open and do not count until you decide each one, fully or as a partial amount:
+
+```bash
+uv run python -m finance_copilot decide
+```
+
+Decisions are stored in `data/private/booking_decisions.yaml` and survive re-imports.
+
 ## Privacy
 
 Real financial data belongs only in `data/private/` and `inbox/`, which are gitignored. A pre-commit hook blocks IBANs, secrets, and warehouse files.

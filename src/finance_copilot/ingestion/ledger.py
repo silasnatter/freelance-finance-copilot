@@ -8,7 +8,7 @@ import csv
 import hashlib
 import re
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
@@ -18,7 +18,8 @@ import duckdb
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from finance_copilot.ingestion.bank_mapping import BankRowError, normalize_name
+from finance_copilot.ingestion.bank_mapping import BankRowError, business_amount, normalize_name
+from finance_copilot.ingestion.decisions import Decision, apply_decision
 from finance_copilot.ingestion.fx import FxRateMissingError, FxRates
 
 
@@ -55,6 +56,7 @@ class BusinessRules(_Model):
     income: tuple[str, ...] = ()
     expense: tuple[str, ...] = ()
     tax: tuple[str, ...] = ()
+    mixed: tuple[str, ...] = ()
 
 
 def is_ledger_mapping(path: Path) -> bool:
@@ -100,7 +102,13 @@ def _classify(counterparty: str, text: str, own_names: frozenset[str], rules: Bu
     if counterparty and normalize_name(counterparty) in own_names:
         return "transfer"
     haystack = normalize_name(counterparty or text)
-    for flow, terms in (("tax", rules.tax), ("expense", rules.expense), ("income", rules.income)):
+    ordered = (
+        ("needs_review", rules.mixed),
+        ("tax", rules.tax),
+        ("expense", rules.expense),
+        ("income", rules.income),
+    )
+    for flow, terms in ordered:
         if _matches(terms, haystack):
             return flow
     return "private"
@@ -154,18 +162,20 @@ def parse_ledger_row(
     labels = mapping.incoming_counterparty if amount >= 0 else mapping.outgoing_counterparty
     counterparty = _first(labeled, labels)
     digest = hashlib.sha256("\x1f".join([*fields, str(occurrence)]).encode()).hexdigest()
+    flow = _classify(counterparty, text, own_names, rules)
 
     return {
         "transaction_id": f"{bank}:{digest[:32]}",
         "bank": bank,
         "booked_at": booked_at,
         "booking_date": booking_date,
-        "flow": _classify(counterparty, text, own_names, rules),
+        "flow": flow,
         "counterparty": counterparty,
         "reference": _first(labeled, mapping.reference) or text,
         "amount_original": amount,
         "currency_original": currency,
         "amount_eur": amount_eur,
+        "business_amount_eur": business_amount(flow, amount_eur),
         "fx_rate": fx_rate,
         "fee_eur": Decimal("0.00"),
     }
@@ -177,6 +187,7 @@ def read_ledger_csv(
     rates: FxRates,
     own_names: frozenset[str],
     rules: BusinessRules,
+    decisions: Mapping[str, Decision] | None = None,
 ) -> list[dict[str, object]]:
     seen: Counter[tuple[str, ...]] = Counter()
     rows = []
@@ -186,11 +197,10 @@ def read_ledger_csv(
             next(reader, None)
         for row_number, fields in enumerate(reader, start=1):
             key = tuple(fields)
-            rows.append(
-                parse_ledger_row(
-                    fields, mapping, rates, own_names, rules, row_number, occurrence=seen[key]
-                )
+            parsed = parse_ledger_row(
+                fields, mapping, rates, own_names, rules, row_number, occurrence=seen[key]
             )
+            rows.append(apply_decision(parsed, decisions or {}))
             seen[key] += 1
     return rows
 

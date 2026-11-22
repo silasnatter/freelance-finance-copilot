@@ -15,7 +15,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Transfers an eigene Konten erkennen [FR-02]
 - [x] Mapping für Raiffeisen Österreich, standardmäßig privat mit lokalen Geschäftsregeln [FR-02]
 - [x] Raiffeisen-Regeln mit echtem Export befüllen und prüfen [FR-02]
-- [ ] Warteschlange für gemischte Händler mit Entscheidung pro Buchung und Teilbeträgen [FR-02, FR-11]
+- [x] Warteschlange für gemischte Händler mit Entscheidung pro Buchung und Teilbeträgen [FR-02, FR-11]
 - [ ] Stabilität der Raiffeisen-ID mit einem zweiten, überlappenden Export prüfen [FR-02]
 - [ ] Mapping für Trade Republic, standardmäßig privat, nur geschäftliche Zahlungen zählen [FR-02]
 - [ ] Mapping für Scalable Capital, standardmäßig privat, SVS und Steuerzahlungen erkennen [FR-02]

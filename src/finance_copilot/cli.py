@@ -1,7 +1,7 @@
 """Command line entry points (RB-04).
 
-Output contains no financial content. The only exception is `review`, which
-refuses to run unless its output goes to a real terminal.
+Output contains no financial content. The only exceptions are `review` and
+`decide`, which refuse to run unless their output goes to a real terminal.
 """
 
 import argparse
@@ -9,7 +9,9 @@ import sys
 import urllib.request
 from collections import Counter
 from collections.abc import Callable, Sequence
+from decimal import Decimal
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import ValidationError
@@ -22,6 +24,16 @@ from finance_copilot.ingestion.bank_mapping import (
     load_bank_mapping,
     load_own_names,
 )
+from finance_copilot.ingestion.decisions import (
+    Decision,
+    PendingBooking,
+    apply_decision,
+    load_decisions,
+    parse_business_amount,
+    pending_bookings,
+    save_decision,
+    store_decision,
+)
 from finance_copilot.ingestion.fx import ECB_HISTORY_URL, FxRates, save_ecb_rates
 from finance_copilot.ingestion.ledger import (
     is_ledger_mapping,
@@ -32,6 +44,7 @@ from finance_copilot.ingestion.ledger import (
 )
 
 BANKS_DIR = PROJECT_ROOT / "config" / "banks"
+DECIDE_PROMPT = "[g] geschäftlich  [p] privat  [t] Teilbetrag  [s] später  [q] beenden > "
 
 
 def _demo(settings: Settings) -> int:
@@ -85,8 +98,9 @@ def _ingest(settings: Settings, bank: str, file: Path) -> int:
             if not settings.paths.business_rules.is_file():
                 print("Hint: no business_rules.yaml found, all rows stay private.", file=sys.stderr)
             rules = _load_private(load_business_rules, settings.paths.business_rules)
+            decisions = _load_private(load_decisions, settings.paths.booking_decisions)
             ledger = load_ledger_mapping(mapping_path)
-            rows = read_ledger_csv(file, ledger, rates, own_names, rules)
+            rows = read_ledger_csv(file, ledger, rates, own_names, rules, decisions)
         else:
             rows = read_bank_csv(file, load_bank_mapping(mapping_path), rates, own_names)
     except (BankRowError, PrivateConfigError) as error:
@@ -112,6 +126,81 @@ def _review(settings: Settings, limit: int) -> int:
     return 0
 
 
+def _format_eur(amount: Decimal) -> str:
+    return f"{amount:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def _ask_decision(booking: PendingBooking) -> Decision | None | Literal["quit"]:
+    """Ask until the answer is valid. None means the booking stays open."""
+    while True:
+        choice = input(DECIDE_PROMPT).strip().casefold()
+        if choice == "g":
+            return Decision(decision="business")
+        if choice == "p":
+            return Decision(decision="private")
+        if choice == "s":
+            return None
+        if choice == "q":
+            return "quit"
+        if choice != "t":
+            print("Bitte g, p, t, s oder q eingeben.")
+            continue
+        while True:
+            try:
+                share = parse_business_amount(
+                    input("Geschäftlicher Anteil in €: "), booking.amount_eur
+                )
+            except ValueError:
+                print(f"Bitte einen Betrag bis {_format_eur(abs(booking.amount_eur))} € eingeben.")
+                continue
+            return Decision(decision="business", business_amount_eur=share)
+
+
+def _decide(settings: Settings) -> int:
+    """Resolve open bookings, only in a real terminal so data stays out of logs and chats."""
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        print("Decide shows personal data. Run it in a separate terminal.", file=sys.stderr)
+        return 1
+    if not settings.paths.warehouse.is_file():
+        print("No warehouse found. Import a bank export first.", file=sys.stderr)
+        return 1
+    path = settings.paths.booking_decisions
+    try:
+        _load_private(load_decisions, path)
+    except PrivateConfigError as error:
+        print(error, file=sys.stderr)
+        return 1
+
+    bookings = pending_bookings(settings.paths.warehouse)
+    decided = 0
+    for position, booking in enumerate(bookings, start=1):
+        print(
+            f"\n({position}/{len(bookings)})  {booking.booking_date:%d.%m.%Y}   "
+            f"{booking.name}   {_format_eur(booking.amount_eur)} €"
+        )
+        try:
+            answer = _ask_decision(booking)
+        except EOFError:
+            break
+        if answer == "quit":
+            break
+        if answer is None:
+            continue
+        save_decision(path, booking.transaction_id, answer)
+        row: dict[str, object] = {
+            "transaction_id": booking.transaction_id,
+            "flow": "needs_review",
+            "amount_eur": booking.amount_eur,
+            "business_amount_eur": Decimal("0.00"),
+        }
+        store_decision(
+            settings.paths.warehouse, apply_decision(row, {booking.transaction_id: answer})
+        )
+        decided += 1
+    print(f"\n{decided} entschieden, {len(bookings) - decided} offen.")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     parser = argparse.ArgumentParser(prog="finance_copilot")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -122,6 +211,7 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     ingest.add_argument("--file", required=True, type=Path)
     review = commands.add_parser("review", help="list unassigned private counterparties")
     review.add_argument("--top", type=int, default=40)
+    commands.add_parser("decide", help="decide open bookings of mixed vendors")
     args = parser.parse_args(argv)
 
     active = settings or load_settings()
@@ -131,4 +221,6 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return _fetch_fx(active)
     if args.command == "review":
         return _review(active, args.top)
+    if args.command == "decide":
+        return _decide(active)
     return _ingest(active, args.bank, args.file)

@@ -59,6 +59,11 @@ def load_bank_mapping(path: Path) -> BankMapping:
     return BankMapping.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
+def business_amount(flow: str, amount_eur: Decimal) -> Decimal:
+    """Return the signed EUR amount that counts for the business."""
+    return amount_eur if flow in ("income", "expense", "tax") else Decimal("0.00")
+
+
 def normalize_name(value: str) -> str:
     """Make account holder names comparable across spelling and spacing."""
     return " ".join(value.split()).casefold()
@@ -130,18 +135,20 @@ def normalize_row(
 
     counterparty = row[rule.counterparty].strip()
     is_own_account = rule.flow != "conversion" and normalize_name(counterparty) in own_names
+    flow = "transfer" if is_own_account else rule.flow
 
     return {
         "transaction_id": f"{bank}:{row_id}",
         "bank": bank,
         "booked_at": booked_at,
         "booking_date": booking_date,
-        "flow": "transfer" if is_own_account else rule.flow,
+        "flow": flow,
         "counterparty": counterparty,
         "reference": row[mapping.reference].strip(),
         "amount_original": rule.sign * amount,
         "currency_original": currency,
         "amount_eur": rule.sign * amount_eur,
+        "business_amount_eur": business_amount(flow, rule.sign * amount_eur),
         "fx_rate": fx_rate,
         "fee_eur": fee_eur,
     }
