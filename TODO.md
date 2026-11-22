@@ -29,7 +29,7 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [x] Staging für Bankbuchungen [NFR-02]
 - [x] Intermediate für geschäftliche Beträge und Gebühren [NFR-02]
 - [x] Marts `fct_transactions`, `mart_monthly_pnl`, `mart_tax_reserve` mit Unit- und Datentests [FR-17, NFR-02]
-- [ ] Marts mit echten Daten bauen und prüfen [NFR-02]
+- [x] Marts mit echten Daten bauen und prüfen [NFR-02]
 - [ ] Steuerrücklage-Satz mit Steuerberater festlegen, aktuell Platzhalter 30 % [FR-17]
 - [ ] Kategorien und regelbasierte Kategorisierung, `dim_category`, `dim_counterparty` [FR-05]
 - [ ] Rechnungs-Marts `fct_invoices`, `dim_customer`, `mart_open_invoices` [FR-03]
