@@ -4,7 +4,7 @@ finance_copilot:
   outputs:
     demo:
       type: duckdb
-      path: data/demo/warehouse.duckdb
+      path: "{{ env_var('FINANCE_COPILOT_DEMO_WAREHOUSE', 'data/demo/warehouse.duckdb') }}"
       threads: 4
     private:
       type: duckdb

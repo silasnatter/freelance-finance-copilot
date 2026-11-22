@@ -9,6 +9,15 @@ paths:
   business_rules: data/private/business_rules.yaml
   booking_decisions: data/private/booking_decisions.yaml
 
+# Exports in the private data folder that the pipeline imports.
+imports:
+  - bank: wise
+    pattern: wise-transactions-20*.csv
+  - bank: raiffeisen
+    pattern: raiffeisen-20*.csv
+  - bank: trade_republic
+    pattern: trade-republic-20*.csv
+
 llm:
   provider: ollama
   # RB-04: real financial data is never sent to an external LLM without this opt-in.

@@ -5,6 +5,8 @@ Output contains no financial content. The only exceptions are `review` and
 """
 
 import argparse
+import os
+import subprocess
 import sys
 import urllib.request
 from collections import Counter
@@ -16,7 +18,13 @@ from typing import Literal
 import yaml
 from pydantic import ValidationError
 
-from finance_copilot.config import PROJECT_ROOT, Settings, load_settings
+from finance_copilot.config import (
+    DATA_ENV_VAR,
+    PROJECT_ROOT,
+    DataTarget,
+    Settings,
+    load_settings,
+)
 from finance_copilot.demo_data.wise import generate_ecb_rates, generate_wise_csv
 from finance_copilot.ingestion.bank_csv import ingest_bank_csv, load_bank_rows, read_bank_csv
 from finance_copilot.ingestion.bank_mapping import (
@@ -211,6 +219,58 @@ def _decide(settings: Settings) -> int:
     return 0
 
 
+def app_command() -> list[str]:
+    """Start the dashboard on this machine only and without usage statistics."""
+    return [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(PROJECT_ROOT / "app" / "dashboard.py"),
+        "--server.address=127.0.0.1",
+        "--browser.gatherUsageStats=false",
+        "--client.toolbarMode=minimal",
+    ]
+
+
+def orchestrator_command() -> list[str]:
+    """Start the Dagster UI on this machine only."""
+    return [
+        sys.executable,
+        "-m",
+        "dagster",
+        "dev",
+        "-m",
+        "finance_copilot.orchestration.definitions",
+        "--host",
+        "127.0.0.1",
+    ]
+
+
+def _launch(command: list[str], target: DataTarget) -> int:
+    dagster_home = PROJECT_ROOT / ".dagster"
+    dagster_home.mkdir(exist_ok=True)
+    environment = os.environ | {
+        DATA_ENV_VAR: target,
+        "DAGSTER_DISABLE_TELEMETRY": "yes",
+        "DAGSTER_HOME": str(dagster_home),
+    }
+    try:
+        return subprocess.run(command, env=environment, check=False).returncode  # noqa: S603
+    except KeyboardInterrupt:
+        return 0
+
+
+def _pipeline(settings: Settings, target: DataTarget) -> int:
+    from finance_copilot.orchestration.pipeline import run_pipeline  # noqa: PLC0415
+
+    if run_pipeline(target, settings):
+        print("Pipeline finished.")
+        return 0
+    print("Pipeline failed.", file=sys.stderr)
+    return 1
+
+
 def main(argv: Sequence[str] | None = None, settings: Settings | None = None) -> int:
     parser = argparse.ArgumentParser(prog="finance_copilot")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -222,6 +282,13 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
     review = commands.add_parser("review", help="list unassigned private counterparties")
     review.add_argument("--top", type=int, default=40)
     commands.add_parser("decide", help="decide open bookings of mixed vendors")
+    for name, description in (
+        ("pipeline", "run imports and dbt once"),
+        ("run", "run the pipeline and open the dashboard"),
+        ("orchestrator", "open the Dagster UI"),
+    ):
+        command = commands.add_parser(name, help=description)
+        command.add_argument("--private", action="store_true", help="use real data")
     args = parser.parse_args(argv)
 
     active = settings or load_settings()
@@ -233,4 +300,12 @@ def main(argv: Sequence[str] | None = None, settings: Settings | None = None) ->
         return _review(active, args.top)
     if args.command == "decide":
         return _decide(active)
+    if args.command in ("pipeline", "run", "orchestrator"):
+        target: DataTarget = "private" if args.private else "demo"
+        if args.command == "orchestrator":
+            return _launch(orchestrator_command(), target)
+        result = _pipeline(active, target)
+        if args.command == "pipeline" or result != 0:
+            return result
+        return _launch(app_command(), target)
     return _ingest(active, args.bank, args.file)

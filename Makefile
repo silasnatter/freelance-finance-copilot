@@ -1,4 +1,4 @@
-.PHONY: setup demo run lint typecheck test dbt dbt-private check
+.PHONY: setup demo run run-private dagster dagster-private lint typecheck test dbt dbt-private check
 
 DBT_ARGS = --project-dir dbt --profiles-dir dbt
 
@@ -10,7 +10,16 @@ demo:
 	uv run python -m finance_copilot demo
 
 run:
-	@echo "make run is implemented in M3 (FR-10)."
+	uv run python -m finance_copilot run
+
+run-private:
+	uv run python -m finance_copilot run --private
+
+dagster:
+	uv run python -m finance_copilot orchestrator
+
+dagster-private:
+	uv run python -m finance_copilot orchestrator --private
 
 lint:
 	uv run ruff check .

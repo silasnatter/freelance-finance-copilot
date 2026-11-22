@@ -10,6 +10,8 @@ from pydantic import BaseModel, ConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WAREHOUSE_ENV_VAR = "FINANCE_COPILOT_WAREHOUSE"
+DATA_ENV_VAR = "FINANCE_COPILOT_DATA"
+DataTarget = Literal["demo", "private"]
 
 
 class PathSettings(BaseModel):
@@ -32,11 +34,29 @@ class LlmSettings(BaseModel):
     external_llm_opt_in: bool = False
 
 
+class ImportSource(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    bank: str
+    pattern: str
+
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     paths: PathSettings
     llm: LlmSettings = LlmSettings()
+    imports: tuple[ImportSource, ...] = ()
+
+
+def data_target(env: Mapping[str, str]) -> DataTarget:
+    """Return which data to use. Demo is the default, so real data needs an explicit choice."""
+    value = env.get(DATA_ENV_VAR, "demo")
+    if value == "demo":
+        return "demo"
+    if value == "private":
+        return "private"
+    raise ValueError(f"{DATA_ENV_VAR} must be demo or private.")
 
 
 def load_settings(

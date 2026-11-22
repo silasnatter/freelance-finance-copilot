@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("setup", "demo", "run", "lint", "typecheck", "test", "dbt", "dbt-private", "check")]
+    [ValidateSet("setup", "demo", "run", "run-private", "dagster", "dagster-private", "lint", "typecheck", "test", "dbt", "dbt-private", "check")]
     [string]$Target = "check"
 )
 
@@ -35,7 +35,10 @@ switch ($Target) {
         Invoke-Step "uv" @("run", "pre-commit", "install")
     }
     "demo" { Invoke-Demo }
-    "run" { Write-Host "make run is implemented in M3 (FR-10)." }
+    "run" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "run") }
+    "run-private" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "run", "--private") }
+    "dagster" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "orchestrator") }
+    "dagster-private" { Invoke-Step "uv" @("run", "python", "-m", "finance_copilot", "orchestrator", "--private") }
     "lint" { Invoke-Lint }
     "typecheck" { Invoke-Typecheck }
     "test" { Invoke-Test }

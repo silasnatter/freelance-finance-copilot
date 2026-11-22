@@ -36,9 +36,11 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] `dbt-expectations` und dbt docs [NFR-02, NFR-09]
 
 ## M3 – Orchestrierung und Dashboard
-- [ ] Dagster-Assets für Ingestion und dbt [NFR-07]
-- [ ] Streamlit-Dashboard, `make run` [FR-10, NFR-01]
-- [ ] Pipeline-Laufzeit unter 3 Minuten prüfen [NFR-10]
+- [x] Dagster-Assets für Ingestion und dbt [NFR-07]
+- [x] Streamlit-Dashboard mit Umsatz, Kosten, Gewinn und Steuerrücklage, `make run` [FR-10, NFR-01]
+- [x] Pipeline-Laufzeit auf Demo-Daten unter 3 Minuten [NFR-10]
+- [ ] Dashboard mit echten Daten prüfen, `make run-private` [FR-10]
+- [ ] Dashboard um Kategorien und offene Rechnungen ergänzen, sobald FR-03 und FR-05 stehen [FR-10]
 
 ## M4 – Dokumente und Vektorsuche
 - [ ] Beleg-Extraktion aus `inbox/` [FR-04]

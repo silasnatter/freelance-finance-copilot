@@ -2,7 +2,7 @@
 
 Local-first analytics platform for freelance finances. Bank transactions and receipts are loaded, modeled with dbt, and made queryable through a dashboard and an LLM interface (text-to-SQL, RAG, MCP).
 
-> **Status:** M1 in progress. Wise import and demo transactions work. The dbt marts, dashboard and AI layer are not implemented yet. See [TODO.md](TODO.md).
+> **Status:** M3. Bank imports, dbt marts, Dagster pipeline and dashboard work. Invoices, receipts and the AI layer are not implemented yet. See [TODO.md](TODO.md).
 
 This project is not tax advice. It does not file tax returns.
 
@@ -12,10 +12,20 @@ Requires [uv](https://docs.astral.sh/uv/). Docker is optional.
 
 ```bash
 make setup
-make check
+make demo
+make run
 ```
 
-On Windows, use `./make.ps1 setup` and `./make.ps1 check`.
+`make run` builds the pipeline on synthetic data and opens the dashboard at `http://localhost:8501`. On Windows, use `./make.ps1 <target>`.
+
+| Command | Purpose |
+| --- | --- |
+| `make run-private` | Pipeline and dashboard with your own data |
+| `make dagster` | Dagster UI with lineage and run status on demo data |
+| `make dagster-private` | Dagster UI with your own data |
+| `make check` | Lint, types, tests and dbt on demo data |
+
+Dashboard and Dagster bind to `127.0.0.1`, and their usage telemetry is turned off.
 
 ## Import a Wise export
 

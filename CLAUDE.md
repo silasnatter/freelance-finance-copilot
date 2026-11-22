@@ -9,7 +9,8 @@ Python 3.12 (uv), dlt, DuckDB, dbt-duckdb, Dagster, LanceDB, sentence-transforme
 
 ## Befehle
 - make setup | make demo | make run | make test | make check (ruff + mypy + pytest + dbt build)
-- make check baut dbt nur auf Demo-Daten; make dbt-private baut die echten Daten und wird vom Nutzer gestartet
+- make check baut dbt nur auf Demo-Daten; make dbt-private und make run-private nutzen echte Daten und werden vom Nutzer gestartet
+- make dagster öffnet die Dagster-UI auf Demo-Daten
 - Windows: ./make.ps1 <target>
 
 ## Regeln
