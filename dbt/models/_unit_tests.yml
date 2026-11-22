@@ -98,3 +98,22 @@ unit_tests:
         - {year: 2026, category_id: software, category_name: Software, sort_order: 1, amount_eur: 80.00, bookings: 2}
         - {year: 2026, category_id: bank_fees, category_name: Bankgebühren, sort_order: 2, amount_eur: 3.00, bookings: 2}
         - {year: 2026, category_id: uncategorized, category_name: Nicht zugeordnet, sort_order: 3, amount_eur: 30.00, bookings: 1}
+
+  - name: costs_by_vendor_are_positive_net_business_shares
+    description: "Partial shares and refunds count. Private rows do not. Missing names use the text."
+    model: mart_costs_by_vendor
+    given:
+      - input: ref('dim_category')
+        rows:
+          - {category_id: hardware, category_name: Hardware, sort_order: 1}
+          - {category_id: uncategorized, category_name: Nicht zugeordnet, sort_order: 2}
+      - input: ref('fct_transactions')
+        rows:
+          - {transaction_id: a, booking_date: 2026-01-05, flow: expense, counterparty: Shop, reference: x, category_id: hardware, amount_eur: -100.00, business_amount_eur: -40.00}
+          - {transaction_id: b, booking_date: 2026-02-05, flow: expense, counterparty: Shop, reference: y, category_id: hardware, amount_eur: 10.00, business_amount_eur: 10.00}
+          - {transaction_id: c, booking_date: 2026-02-06, flow: expense, counterparty: "", reference: Kartenzahlung, category_id: uncategorized, amount_eur: -5.00, business_amount_eur: -5.00}
+          - {transaction_id: d, booking_date: 2026-02-07, flow: private, counterparty: Shop, reference: z, category_id: hardware, amount_eur: -70.00, business_amount_eur: 0.00}
+    expect:
+      rows:
+        - {year: 2026, vendor: Kartenzahlung, category_name: Nicht zugeordnet, cost_eur: 5.00, bookings: 1}
+        - {year: 2026, vendor: Shop, category_name: Hardware, cost_eur: 30.00, bookings: 2}

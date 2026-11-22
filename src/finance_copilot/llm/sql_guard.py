@@ -16,6 +16,7 @@ ALLOWED_TABLES = frozenset(
         "dim_category",
         "dim_date",
         "fct_transactions",
+        "mart_costs_by_vendor",
         "mart_expenses_by_category",
         "mart_monthly_pnl",
         "mart_tax_reserve",

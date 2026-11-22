@@ -49,7 +49,8 @@ def warehouse(tmp_path: Path) -> Path:
         )
         connection.execute(
             "create table marts.fct_transactions as select 'a' as transaction_id, "
-            "'Secret Vendor' as counterparty"
+            "'Secret Vendor' as counterparty, cast(-5 as decimal(18, 2)) as amount_eur, "
+            "cast(-2 as decimal(18, 2)) as business_amount_eur"
         )
         connection.execute("create table raw.bank_transactions as select 'hidden' as reference")
     return path
@@ -75,6 +76,13 @@ def test_schema_prompt_has_structure_but_no_data(warehouse: Path) -> None:
     assert "revenue_eur" in prompt
     assert "Secret Vendor" not in prompt
     assert "bank_transactions" not in prompt
+
+
+def test_schema_prompt_hides_full_booking_amounts(warehouse: Path) -> None:
+    prompt = build_schema_prompt(warehouse)
+
+    assert "business_amount_eur" in prompt
+    assert " amount_eur" not in prompt
 
 
 def test_answer_runs_generated_sql(warehouse: Path) -> None:

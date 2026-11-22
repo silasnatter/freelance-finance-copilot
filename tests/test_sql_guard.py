@@ -26,6 +26,7 @@ def warehouse(tmp_path: Path) -> Path:
     "sql",
     [
         "select * from marts.mart_monthly_pnl",
+        "select vendor, cost_eur from marts.mart_costs_by_vendor",
         "SELECT year, SUM(revenue_eur) FROM marts.mart_monthly_pnl GROUP BY 1 ORDER BY 2 DESC",
         "with x as (select year, sum(revenue_eur) as r from marts.mart_monthly_pnl group by 1) "
         "select * from x",

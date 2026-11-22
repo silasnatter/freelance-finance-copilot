@@ -53,11 +53,14 @@ Backlog aus `docs/requirements.md`. Pro Session genau eine Aufgabe.
 - [ ] (zurückgestellt) Rechnung-Zahlung-Matching [FR-09]
 
 ## M5 – LLM-Schicht
-- [ ] Provider-Schnittstelle für Ollama und Claude [RB-06]
-- [ ] Text-to-SQL mit `sqlglot`, Read-only und Allowlist [FR-12, NFR-04]
+- [x] Provider-Schnittstelle mit lokalem Ollama [RB-06]
+- [ ] Claude als optionaler Provider mit explizitem Opt-in [RB-04, RB-06]
+- [x] Text-to-SQL mit `sqlglot`, Read-only und Allowlist, 19/20 Testfragen auf Demo-Daten [FR-12, NFR-04]
+- [ ] Chat mit echten Daten prüfen [FR-12]
 - [ ] RAG über Belege mit Quellenangabe [FR-13]
 - [ ] Router [FR-14]
-- [ ] Eval-Skripte und Testsets [NFR-08]
+- [x] Eval für Text-to-SQL, `make eval` [NFR-08]
+- [ ] Evals für RAG und Kategorisierung [NFR-08]
 
 ## M6 – MCP-Server und Semantic Layer
 - [ ] MCP-Server mit vier Tools [FR-15]

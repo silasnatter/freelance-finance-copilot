@@ -21,21 +21,26 @@ from finance_copilot.llm.sql_guard import (
 )
 
 MAX_ATTEMPTS = 2
+# Full booking amounts include private shares, so the model must not sum them.
+HIDDEN_COLUMNS = {"fct_transactions": {"amount_eur", "amount_original", "fee_eur", "fx_rate"}}
 SAFE_ERROR_DETAILS = (duckdb.BinderException, duckdb.CatalogException, duckdb.ParserException)
 SYSTEM_PROMPT = """You write one DuckDB SELECT query that answers a question about finances.
 Return only SQL. Use only the tables below, always with the schema name marts.
 
 Meaning of the data:
 - All amounts are in EUR.
-- marts.mart_monthly_pnl: one row per month. revenue_eur, expenses_eur, fees_eur, profit_eur,
-  tax_payments_eur. Use it for revenue, costs and profit. Total costs = expenses_eur + fees_eur.
+- marts.mart_monthly_pnl: one row per month with year, quarter and year_month ('2026-03').
+  revenue_eur, expenses_eur, fees_eur, profit_eur, tax_payments_eur. Use it for revenue, costs
+  and profit. Total costs = expenses_eur + fees_eur.
 - marts.mart_expenses_by_category: one row per year and category, with category_name and
-  amount_eur. Use it for costs by category. It already includes bank fees.
+  amount_eur (positive). Use it for all costs by category, including the category Bankgebühren.
+- marts.mart_costs_by_vendor: one row per year, vendor and category_name, with cost_eur
+  (positive). Use it for how much was paid to a vendor and for ranking vendors, highest first.
 - marts.mart_tax_reserve: one row per month. target_balance_eur is the expected balance of the
   savings pot in that month and is cumulative, so use the latest month and never sum it.
-- marts.fct_transactions: one row per booking. Filter by flow: income, expense, tax, transfer,
-  conversion, private, investment, needs_review. Business amounts are in business_amount_eur;
-  expenses are negative there. Use it for questions about single vendors or bookings.
+  Scalable means this savings pot.
+- marts.fct_transactions: one row per booking. Use it only to count or list bookings. Filter by
+  flow: income, expense, tax, transfer, conversion, private, investment, needs_review.
 - Category names include: Software & Hosting, Hardware & Geräte, Versicherung & SVS,
   Telefon & Internet, Steuerberatung & Buchhaltung, Weiterbildung, Reisen, Werbung,
   Büro & Arbeitsplatz, Events & Veranstaltungen, Behörden & Kammern, Bankgebühren, Sonstiges.
@@ -73,7 +78,7 @@ def build_schema_prompt(warehouse: Path) -> str:
         ).fetchall()
     tables: dict[str, list[str]] = {}
     for table, column, data_type in columns:
-        if table in ALLOWED_TABLES:
+        if table in ALLOWED_TABLES and column not in HIDDEN_COLUMNS.get(table, ()):
             tables.setdefault(table, []).append(f"{column} {data_type}")
     return "\n".join(
         f"{MART_SCHEMA}.{table}({', '.join(definition)})"

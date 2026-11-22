@@ -2,7 +2,7 @@
 
 Local-first analytics platform for freelance finances. Bank transactions and receipts are loaded, modeled with dbt, and made queryable through a dashboard and an LLM interface (text-to-SQL, RAG, MCP).
 
-> **Status:** M3. Bank imports, dbt marts, Dagster pipeline and dashboard work. Invoices, receipts and the AI layer are not implemented yet. See [TODO.md](TODO.md).
+> **Status:** M3. Bank imports, dbt marts, Dagster pipeline and dashboard work. The text-to-SQL chat works. Invoices, receipts, RAG and MCP are not implemented yet. See [TODO.md](TODO.md).
 
 This project is not tax advice. It does not file tax returns.
 
@@ -79,6 +79,18 @@ The dashboard shows how much should be on your savings account if you move a fix
 ## Cost categories
 
 Categories are defined in `config/categories.yaml`. To assign your vendors, copy `config/category_rules.example.yaml` to `data/private/category_rules.yaml`, then rerun the import. `uv run python -m finance_copilot review --uncategorized` lists business costs without a category. It only runs in a real terminal.
+
+## Finance chat
+
+Ask questions in natural language on the `Chat` page of the dashboard. A local Ollama model writes the SQL, and the numbers come directly from the database.
+
+```bash
+docker compose --profile ollama up -d
+docker compose exec ollama ollama pull qwen2.5-coder:3b
+make run
+```
+
+The model only receives table structures, never row values. Queries are limited to reads on the marts and run on a connection without write or file access. `make eval` measures the model on 20 demo questions; the current result is 19/20.
 
 ## Privacy
 

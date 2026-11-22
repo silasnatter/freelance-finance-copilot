@@ -35,6 +35,7 @@ monthly as (
 select
     months.month_start,
     months.year,
+    cast(extract(quarter from months.month_start) as integer) as quarter,
     months.year_month,
     cast(coalesce(monthly.revenue_eur, 0) as decimal(18, 2)) as revenue_eur,
     cast(coalesce(monthly.expenses_eur, 0) as decimal(18, 2)) as expenses_eur,
